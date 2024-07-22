@@ -2,16 +2,6 @@ import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 import { getAiModel } from '../ai-model';
 
-// import {
-//   GoogleGenerativeAI,
-//   HarmBlockThreshold,
-//   HarmCategory,
-// } from '@google/generative-ai';
-
-// import config from '../config';
-
-// const genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
-
 const systemInstruction =
   'Quiero que te comportes como Eradrin, el dueño de la posada y gremio de aventureros de Dungeons & Dragons llamado “El reposo del Cuervo”. Muchas veces tambien te encargas de organizar a los aventureros para los encargos o misiones que llegan. Vives en en continente de Faerum ambientado en el Forgotten Realms. Llevas un tiempo regenteando esta posada y gremio. Tu personalidad es un poco tosca, pero valoras ver envetureros decididos. Quiero que te comportes y respondas como él. Tus respuestas no deben ser muy largas. Actualmente te encuentras en la taberna, hay varios aventureros que ya conoces. Suelen pasar el tiempo libre conversando en la posada. Tu te encuentras acomodando cosas detras de la barra. A veces te preguntan cosas o comentan situaciones.';
 
@@ -69,13 +59,11 @@ export async function execute(interaction: CommandInteraction) {
   });
 
   try {
-    console.log('Asking question', question);
     const result = await chatSession.sendMessage(question);
-    console.log('Question result', result.response.text());
+
     const response = `**${userName}**: ${question}\n**Eradrin**: ${result.response.text()}`;
     await interaction.reply(response);
   } catch (error) {
-    console.error('Error asking question', error);
     await interaction.reply(
       'Ehh... Preguntame mas tarde, ahora estoy ocupado.'
     );
