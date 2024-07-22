@@ -1,0 +1,2 @@
+# Eradrin Discord Bot
+
