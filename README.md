@@ -1,10 +1,13 @@
-![Eradrin Iamge](./assets/Eradrin.png)
+<div align="center">
+<img width="196px" alt="Eradrin Iamge" src="./assets/Eradrin.png">
 
 # Eradrin Bot
 
-Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API and also provides direct links to character sheets for a Dungeons & Dragons campaign on the Nivel20 site. This is especially useful because the Nivel20 search engine is extremely slow and inefficient.
+Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API <br/> and also provides direct links to character sheets for a D&D campaign on the Nivel20 site.<br/>This is especially useful because the Nivel20 search engine is extremely slow and inefficient.
 
-## Features
+</div>
+
+## ✨ Features
 
 - **Chatbot**: Uses the Gemini AI API to interact with users.
 
@@ -14,7 +17,7 @@ Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API and 
 
 ![character](./assets/character.png)
 
-## Requirements
+## 📦 Requirements
 
 - Node.js
 - Discord Bot Token
@@ -25,7 +28,7 @@ Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API and 
   - **`GUILD_ID`**
   - **`GEMINI_API_KEY`**
 
-## Installation
+## ⚡️ Quick start
 
 1. Clone this repository:
 
@@ -53,24 +56,7 @@ GEMINI_API_KEY=123456789qwertyuiop
 
    `npm start`
 
-## Scripts
-
-- **`build`**: Compiles the TypeScript project.
-- **`start`**: Starts the bot.
-- **`dev`**: Starts the bot in development mode with automatic reloading.
-- **`deploy:commands`**: Compiles the project and deploys the Discord commands.
-
-## Development
-
-To contribute to the development of Eradrin Bot, follow these steps:
-
-1. Fork the repository.
-2. Create a new branch (**`git checkout -b feature/new-feature`**).
-3. Make your changes and commit them (**`git commit -am 'Add new feature'`**).
-4. Push your changes (**`git push origin feature/new-feature`**).
-5. Open a Pull Request.
-
-## Upcoming Features
+## 🎯 Upcoming Features
 
 I am planning to add the following features to enhance the D&D experience:
 
@@ -79,6 +65,6 @@ I am planning to add the following features to enhance the D&D experience:
 - **Encounter Generator**: Create random encounters with different levels of difficulty and variety of monsters.
 - **NPC Generator**: Generate random NPCs with unique names, backgrounds, and characteristics.
 
-## Author
+## 👩‍💻 Author
 
 - [TanisJam](https://mnr.ar)
