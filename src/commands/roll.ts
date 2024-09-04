@@ -97,9 +97,8 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   if (iterations > 20) {
-    // i want to remove the roll of the middle until having 15 in the rolls array to make it more readable
-    const start = rolls.slice(0, 7); // Primeros 7 elementos
-    const end = rolls.slice(-7); // Últimos 7 elementos
+    const start = rolls.slice(0, 7);
+    const end = rolls.slice(-7);
     rolls = [...start, '. . . . .', ...end];
   }
 
@@ -111,8 +110,10 @@ export async function execute(interaction: CommandInteraction) {
       `🔹*Media de las tiradas:* **${Math.round(sumRolls / iterations)}**`
     );
   }
+  if (dc > 0) {
+    rolls.push(`===DC: ${dc}===`);
+  }
   if (dc > 0 && succesedRolls > 0 && iterations > 1) {
-    rolls.push('=======');
     rolls.push(`**${succesedRolls}** tiradas han sido exitosas!`);
   }
 
