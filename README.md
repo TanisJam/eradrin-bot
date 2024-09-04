@@ -9,13 +9,25 @@ Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API <br/
 
 ## ✨ Features
 
-- **Chatbot**: Uses the Gemini AI API to interact with users.
+> - **Chatbot**: Uses the Gemini AI API to answer user questions.
+>
+> ![aks](./assets/ask.png)
 
-![aks](./assets/ask.png)
 
-- **Direct links to character sheets**: Provides quick and direct links to character sheets on Nivel20.
+>- **Search for characters**: Provides quick and direct links to character sheets on Nivel20.
+>
+>![character](./assets/character.png)
 
-![character](./assets/character.png)
+>- **Roll dice**: Provides a comprehensive and acurate dice rolls using [RPG Dice Roller](https://github.com/dice-roller/rpg-dice-roller)
+>
+>![roll](./assets/roll.png)
+
+>- **Randoms Stats**: Rolls random stats for a character creation.
+>
+>![stats](./assets/stats.png)
+
+
+
 
 ## 📦 Requirements
 
@@ -65,6 +77,7 @@ GEMINI_API_KEY=123456789qwertyuiop
 I am planning to add the following features to enhance the D&D experience:
 
  - [x] **Dice Roller**: A feature to roll dice directly within Discord, supporting various types of dice (e.g., d20, d12, d10, d8, d6, d4).
+ - [x] **Random Stats Generator**: A feature to generate random for a character creation.
  - [ ] **Random Loot Generator**: Automatically generate loot for encounters, including items, gold, and other stuff.
  - [ ] **Plot Generator**: Create random plots for encounters or adventures.
  - [ ] **Encounter Generator**: Create random encounters with different levels of difficulty and variety of monsters.
