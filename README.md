@@ -56,6 +56,10 @@ GEMINI_API_KEY=123456789qwertyuiop
 
    `npm start`
 
+6. Deploy commands:
+
+   `npm run deploy:commands`
+   
 ## 🎯 Upcoming Features
 
 I am planning to add the following features to enhance the D&D experience:
