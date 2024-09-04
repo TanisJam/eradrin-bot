@@ -43,25 +43,45 @@ export const data = new SlashCommandBuilder()
       .setName('iterations')
       .setDescription('El numero de veces que se repite el rol')
       .setRequired(false)
+  )
+  .addStringOption((option) =>
+    option
+      .setName('advantage')
+      .setDescription('Si la tirada es con ventaja o desventaja')
+      .addChoices(
+        { name: 'ventaja', value: 'adv' },
+        { name: 'desventaja', value: 'dis' }
+      )
+      .setRequired(false)
   );
 
 export async function execute(interaction: CommandInteraction) {
   const dice = interaction.options.get('dice')?.value;
-  const number = interaction.options.get('number')?.value || 1;
+  const number = (interaction.options.get('number')?.value as number) || 1;
   const mod = (interaction.options.get('mod')?.value as number) || 0;
   const dc = (interaction.options.get('dc')?.value as number) || 0;
+  const advantage = interaction.options.get('advantage')?.value;
   const iterations =
     (interaction.options.get('iterations')?.value as number) || 1;
 
-  const rolls = [];
+  if (advantage !== undefined && number < 2) {
+    return interaction.reply(
+      '🔸*La tirada debe tener al menos dos dados para poder usar ventaja o desventaja*'
+    );
+  }
+
+  let rolls = [];
 
   const rollString = `${number}d${dice}${
-    mod ? `${mod > 0 ? `+${mod}` : mod}` : ''
-  }`;
+    advantage === 'adv' ? `kh1` : advantage === 'dis' ? `kl1` : ''
+  }${mod ? `${mod > 0 ? `+${mod}` : mod}` : ''}`;
 
   let succesedRolls = 0;
+  let sumRolls = 0;
+
   for (let i = 0; i < (iterations > 100 ? 100 : iterations); i++) {
     const roll = new DiceRoll(rollString);
+    sumRolls += roll.total;
     const result = `${roll}`.replace(/=\s*(-?\d+)/, '= **$1**');
     if (dc > 0) {
       const success = roll.total >= dc;
@@ -76,6 +96,21 @@ export async function execute(interaction: CommandInteraction) {
     }
   }
 
+  if (iterations > 20) {
+    // i want to remove the roll of the middle until having 15 in the rolls array to make it more readable
+    const start = rolls.slice(0, 7); // Primeros 7 elementos
+    const end = rolls.slice(-7); // Últimos 7 elementos
+    rolls = [...start, '. . . . .', ...end];
+  }
+
+  if (iterations > 1) {
+    rolls.push('=======');
+    rolls.push(`🔹*Tiradas realizadas:* **${iterations}**`);
+    rolls.push(`🔹*Suma total de las tiradas:* **${sumRolls}**`);
+    rolls.push(
+      `🔹*Media de las tiradas:* **${Math.round(sumRolls / iterations)}**`
+    );
+  }
   if (dc > 0 && succesedRolls > 0 && iterations > 1) {
     rolls.push('=======');
     rolls.push(`**${succesedRolls}** tiradas han sido exitosas!`);

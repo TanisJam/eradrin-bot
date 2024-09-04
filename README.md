@@ -60,10 +60,12 @@ GEMINI_API_KEY=123456789qwertyuiop
 
 I am planning to add the following features to enhance the D&D experience:
 
-- **Dice Roller**: A feature to roll dice directly within Discord, supporting various types of dice (e.g., d20, d12, d10, d8, d6, d4).
-- **Random Loot Generator**: Automatically generate loot for encounters, including items, gold, and magical artifacts.
-- **Encounter Generator**: Create random encounters with different levels of difficulty and variety of monsters.
-- **NPC Generator**: Generate random NPCs with unique names, backgrounds, and characteristics.
+ - [x] **Dice Roller**: A feature to roll dice directly within Discord, supporting various types of dice (e.g., d20, d12, d10, d8, d6, d4).
+ - [ ] **Random Loot Generator**: Automatically generate loot for encounters, including items, gold, and other stuff.
+ - [ ] **Plot Generator**: Create random plots for encounters or adventures.
+ - [ ] **Encounter Generator**: Create random encounters with different levels of difficulty and variety of monsters.
+ - [ ] **NPC Generator**: Generate random NPCs with unique names, backgrounds, and characteristics.
+
 
 ## 👩‍💻 Author
 
