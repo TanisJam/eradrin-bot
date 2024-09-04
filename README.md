@@ -7,7 +7,7 @@ Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API <br/
 
 </div>
 
-## ✨ Features
+# ✨ Features
 
 > - **Chatbot**: Uses the Gemini AI API to answer user questions.
 >
@@ -29,7 +29,7 @@ Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API <br/
 
 
 
-## 📦 Requirements
+# 📦 Requirements
 
 - Node.js
 - Discord Bot Token
@@ -40,7 +40,7 @@ Eradrin Bot is a Discord bot that acts as a chatbot using the Gemini AI API <br/
   - **`GUILD_ID`**
   - **`GEMINI_API_KEY`**
 
-## ⚡️ Quick start
+# ⚡️ Quick start
 
 1. Clone this repository:
 
@@ -71,8 +71,48 @@ GEMINI_API_KEY=123456789qwertyuiop
 6. Deploy commands:
 
    `npm run deploy:commands`
+
+# 🛎️ Available Commands
+
+### `/ask`
+- **Description**: Ask Eradrin something.
+- **Options**:
+  - `question` (string, required): The question you want to ask Eradrin.
+
+### `/character`
+- **Description**: Receive information about a character.
+- **Options**:
+  - `name` (string, required): Name of the character.
+
+### `/ping`
+- **Description**: Replies with "Pong!".
+
+### `/roll`
+- **Description**: Roll some dice.
+- **Options**:
+  - `dice` (integer, required): The die to roll.
+    - **Available options**:
+      - `d2` (2)
+      - `d4` (4)
+      - `d6` (6)
+      - `d8` (8)
+      - `d10` (10)
+      - `d12` (12)
+      - `d20` (20)
+      - `d100` (100)
+  - `number` (integer, optional): The number of dice to roll.
+  - `mod` (integer, optional): The modifier to add to the result.
+  - `dc` (integer, optional): The difficulty of the roll.
+  - `iterations` (integer, optional): The number of times to repeat the roll.
+  - `advantage` (string, optional): Whether the roll is with advantage or disadvantage.
+    - **Options**:
+      - `advantage` (adv)
+      - `disadvantage` (dis)
+
+### `/rollstats`
+- **Description**: Generates stats for your next character (or sends you to point buy).
    
-## 🎯 Upcoming Features
+# 🎯 Upcoming Features
 
 I am planning to add the following features to enhance the D&D experience:
 
@@ -84,6 +124,6 @@ I am planning to add the following features to enhance the D&D experience:
  - [ ] **NPC Generator**: Generate random NPCs with unique names, backgrounds, and characteristics.
 
 
-## 👩‍💻 Author
+# 👩‍💻 Author
 
 - [TanisJam](https://mnr.ar)
