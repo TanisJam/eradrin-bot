@@ -10,6 +10,7 @@ export const client = new Client({
     IntentsBitField.Flags.GuildMessages,
     IntentsBitField.Flags.MessageContent,
     IntentsBitField.Flags.GuildMessages,
+    IntentsBitField.Flags.GuildMembers,
   ],
 });
 
