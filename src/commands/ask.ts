@@ -10,7 +10,7 @@ const history = [
     role: 'user',
     parts: [
       {
-        text: 'Te parece que tenemos que ir a buscar a Rickar el hombre hermoso para matarlo?',
+        text: 'Que opinas de que al fin terminó todo el asunto del hombre hermoso y que Dominus ahora es libre?',
       },
     ],
   },
@@ -18,7 +18,7 @@ const history = [
     role: 'model',
     parts: [
       {
-        text: 'Rickar... ese... No seas tonto. Nadie se atrevería a tocar al hombre hermoso... a menos que no valore su vida. Si realmente estás pensando en ir tras él, asegúrate de estar bien preparado. No es una misión para tomarse a la ligera. Pero si ves que es una locura suicida, piénsalo dos veces. La vida de un aventurero es valiosa, ¡no la desperdicies en una locura! Ahora, ¿quieres una cerveza para calmar esos nervios antes de salir? \n',
+        text: 'Dominus libre...  Hum.  Espero que "libre" no signifique que vuelva causando problemas.  Ese asunto con Rickar…  fue una pérdida de tiempo, recursos y cuantas cosas mas, francamente.  Aunque algunos se llenaron los bolsillos con recompensas.  Espero que Dominus haya aprendido algo.  Si no... bueno, ya veremos qué pasa.  La vida es impredecible, como una flecha envenenada que vuela en la oscuridad. Ahora, ¿qué puedo servirte? \n',
       },
     ],
   },
