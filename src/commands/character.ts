@@ -1,6 +1,13 @@
-import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
-import axios from 'axios';
-import { load } from 'cheerio';
+import {
+  CommandInteraction,
+  SlashCommandBuilder,
+  ComponentType,
+} from 'discord.js';
+import { Nivel20Service } from '../services/nivel20.service';
+import { createCharacterButtons } from '../utils/discord.utils';
+
+const INTERACTION_TIMEOUT = 60000; // 1 min
+const nivel20Service = new Nivel20Service();
 
 export const data = new SlashCommandBuilder()
   .setName('character')
@@ -9,29 +16,61 @@ export const data = new SlashCommandBuilder()
     option
       .setName('name')
       .setDescription('Nombre del personaje')
+      .setMinLength(2)
       .setRequired(true)
   );
 
 export async function execute(interaction: CommandInteraction) {
-  await interaction.deferReply();
-  const name = interaction.options.get('name')?.value as string;
-  const url = `https://nivel20.com/games/dnd-5/campaigns/76536-el-reposo-del-cuervo/characters?utf8=%E2%9C%93&q=${name}`;
-  const response = await axios.get(url);
-  const html = response.data;
-  const $ = load(html);
-  const characters = $('.campaign-characters');
+  try {
+    await interaction.deferReply();
+    const name = interaction.options.get('name')?.value as string;
+    const characters = await nivel20Service.searchCharacters(name);
 
-  const charactersDescs = characters.find('.character-desc');
-  const responseText = charactersDescs.map((i, el) => {
-    const character = $(el);
-    const name = character.find('a').text();
-    const link = character.find('a').attr('href');
-    return `Información sobre [${name}](https://nivel20.com${link})`;
-  });
+    if (characters.length === 0) {
+      await interaction.editReply(`No se encontró coincidencia con ${name}`);
+      return;
+    }
 
-  if (responseText.get().join('') === '') {
-    await interaction.editReply(`No se encontró coincidencia con ${name}`);
-  } else {
-    await interaction.editReply(responseText.get().join(''));
+    const rows = createCharacterButtons(characters);
+    const message = await interaction.editReply({
+      content: `Se encontraron los siguientes personajes:\n${characters
+        .map((char, index) => `${index + 1}. ${char.name}`)
+        .join('\n')}`,
+      components: rows,
+    });
+
+    const collector = message.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+      time: INTERACTION_TIMEOUT,
+    });
+
+    collector.on('collect', async (i) => {
+      if (i.user.id !== interaction.user.id) {
+        await i.reply({
+          content: 'No puedes interactuar con este comando.',
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const index = parseInt(i.customId.split('_')[1]);
+      const selectedChar = characters[index];
+      const charStats = await nivel20Service.getCharacterStats(
+        selectedChar.link
+      );
+
+      if (charStats) {
+        const embed = charStats.toEmbed();
+        await i.reply({ embeds: [embed] });
+      } else {
+        await i.reply('No se pudo cargar la información del personaje.');
+      }
+    });
+
+    collector.on('end', async () => {
+      await interaction.editReply({ components: [] });
+    });
+  } catch (error) {
+    await interaction.editReply('Ocurrió un error al procesar tu solicitud.');
   }
 }
