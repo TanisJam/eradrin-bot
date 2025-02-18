@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+
+      - GEMINI_API_KEY
+      - CLIENT_ID
+      - TOKEN
+      - GUILD_ID
+    restart: unless-stopped
