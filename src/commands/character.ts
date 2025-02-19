@@ -31,6 +31,17 @@ export async function execute(interaction: CommandInteraction) {
       return;
     }
 
+    if (characters.length === 1) {
+      const charStats = await nivel20Service.getCharacterStats(characters[0].link);
+      if (charStats) {
+        const embed = charStats.toEmbed();
+        await interaction.editReply({ embeds: [embed] });
+      } else {
+        await interaction.editReply('No se pudo cargar la información del personaje.');
+      }
+      return;
+    }
+
     const rows = createCharacterButtons(characters);
     const message = await interaction.editReply({
       content: `Se encontraron los siguientes personajes:\n${characters
