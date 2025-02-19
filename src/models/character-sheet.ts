@@ -1,64 +1,25 @@
+import { conditionallyUnderline } from '../utils/format-text';
 import { Nivel20character } from './nivel20response';
+import { AbilityScores, SavingThrows, Skills } from './types';
+import { ABILITY_NAMES, SKILL_DEFINITIONS } from './constants';
 
 export class CharacterSheet {
-  url: string;
-  name: string;
-  level_desc: string;
-  hit_points: number;
-  proficiency_bonus: number;
-  image_url: string;
-  initiative: number;
-  speed: number;
-  armor: number;
-  abilities: {
-    str: number;
-    dex: number;
-    con: number;
-    int: number;
-    wis: number;
-    cha: number;
-  };
-  saving_throws: {
-    str: number;
-    dex: number;
-    con: number;
-    int: number;
-    wis: number;
-    cha: number;
-  };
-  skills: {
-    acrobatics: number;
-    arcana: number;
-    athletics: number;
-    deception: number;
-    history: number;
-    performance: number;
-    insight: number;
-    intimidation: number;
-    investigation: number;
-    sleight_of_hand: number;
-    medicine: number;
-    nature: number;
-    perception: number;
-    persuasion: number;
-    religion: number;
-    stealth: number;
-    survival: number;
-    animal_handling: number;
-  };
+  private url: string;
+  private name: string;
+  private level_desc: string;
+  private hit_points: number;
+  private proficiency_bonus: number;
+  private image_url: string;
+  private initiative: number;
+  private speed: number;
+  private armor: number;
+  private characteristics: AbilityScores;
+  private saving_throws: SavingThrows;
+  private skills: Skills;
+
 
   constructor(characterData: Nivel20character, url: string) {
-    const {
-      skill,
-      ability,
-      abilities,
-      saving_throws,
-      speed,
-      initiative,
-      armor,
-      info,
-      equipment,
-    } = characterData.printable_hash;
+    const { skill, ability, speed, initiative, armor, info } = characterData.printable_hash;
     
     this.url = url;
     this.name = info.name;
@@ -69,42 +30,67 @@ export class CharacterSheet {
     this.initiative = initiative.total;
     this.speed = speed.total;
     this.armor = armor.normal;
-    this.abilities = {
-      str: ability.fue.total,
-      dex: ability.des.total,
-      con: ability.con.total,
-      int: ability.int.total,
-      wis: ability.sab.total,
-      cha: ability.car.total,
+
+    this.characteristics = {
+      str: { total: ability.fue.total, mod: ability.fue.mod },
+      dex: { total: ability.des.total, mod: ability.des.mod },
+      con: { total: ability.con.total, mod: ability.con.mod },
+      int: { total: ability.int.total, mod: ability.int.mod },
+      wis: { total: ability.sab.total, mod: ability.sab.mod },
+      cha: { total: ability.car.total, mod: ability.car.mod },
     };
+
     this.saving_throws = {
-      str: ability.fue.saving_throw.total,
-      dex: ability.des.saving_throw.total,
-      con: ability.con.saving_throw.total,
-      int: ability.int.saving_throw.total,
-      wis: ability.sab.saving_throw.total,
-      cha: ability.car.saving_throw.total,
+      str: this.mapSavingThrow(ability.fue.saving_throw),
+      dex: this.mapSavingThrow(ability.des.saving_throw),
+      con: this.mapSavingThrow(ability.con.saving_throw),
+      int: this.mapSavingThrow(ability.int.saving_throw),
+      wis: this.mapSavingThrow(ability.sab.saving_throw),
+      cha: this.mapSavingThrow(ability.car.saving_throw),
     };
+
     this.skills = {
-      acrobatics: skill.acrobacias.total,
-      arcana: skill.arcanos.total,
-      athletics: skill.atletismo.total,
-      deception: skill.enganar.total,
-      history: skill.historia.total,
-      performance: skill.interpretacion.total,
-      insight: skill.interpretacion.total,
-      intimidation: skill.intimidar.total,
-      investigation: skill.investigacion.total,
-      sleight_of_hand: skill.juego_de_manos.total,
-      medicine: skill.medicina.total,
-      nature: skill.naturaleza.total,
-      perception: skill.percepcion.total,
-      persuasion: skill.persuasion.total,
-      religion: skill.religion.total,
-      stealth: skill.sigilo.total,
-      survival: skill.supervivencia.total,
-      animal_handling: skill.trato_con_animales.total,
+      acrobatics: this.mapSkill(skill.acrobacias),
+      arcana: this.mapSkill(skill.arcanos),
+      athletics: this.mapSkill(skill.atletismo),
+      deception: this.mapSkill(skill.enganar),
+      history: this.mapSkill(skill.historia),
+      performance: this.mapSkill(skill.interpretacion),
+      insight: this.mapSkill(skill.perspicacia),
+      intimidation: this.mapSkill(skill.intimidar),
+      investigation: this.mapSkill(skill.investigacion),
+      sleight_of_hand: this.mapSkill(skill.juego_de_manos),
+      medicine: this.mapSkill(skill.medicina),
+      nature: this.mapSkill(skill.naturaleza),
+      perception: this.mapSkill(skill.percepcion),
+      persuasion: this.mapSkill(skill.persuasion),
+      religion: this.mapSkill(skill.religion),
+      stealth: this.mapSkill(skill.sigilo),
+      survival: this.mapSkill(skill.supervivencia),
+      animal_handling: this.mapSkill(skill.trato_con_animales),
     };
+  }
+
+  private mapSavingThrow(save: any) {
+    return {
+      total: save.total,
+      proficient: save.proficiency === 'proficient'
+    };
+  }
+
+  private mapSkill(skill: any) {
+    return {
+      total: skill.total,
+      proficient: skill.proficiency === 'proficient'
+    };
+  }
+
+  private formatModifier = (value: number) => `${value >= 0 ? '+' : ''}${value}`;
+
+  private formatAbility(ability: any, savingThrow: any, proficiency = false): string {
+    return `\`${this.formatModifier(ability.mod)} (${ability.total})\` | ${
+      conditionallyUnderline('**TS:**', proficiency)
+    } \`${this.formatModifier(savingThrow.total)}\``;
   }
 
   toEmbed() {
@@ -113,74 +99,50 @@ export class CharacterSheet {
       title: `📜 ${this.name}`,
       url: this.url,
       description: `**${this.level_desc}**`,
-      thumbnail: {
-        url: this.image_url,
-      },
+      thumbnail: { url: this.image_url },
       fields: [
         {
           name: '',
-          value: `**❤️ PG:** \`${this.hit_points}\``,
-          inline: true,
+          value: [
+            `**❤️ PG:** \`${this.hit_points}\``,
+            `**🛡️ CA:** \`${this.armor}\``,
+            `**🏃 Velocidad:** \`${this.speed}ft\``,
+            `**⚡ Iniciativa:** \`${this.formatModifier(this.initiative)}\``,
+            `**🎖️ Bono de Comp:** +\`${this.proficiency_bonus}\``,
+          ].join('\n')
         },
         {
           name: '',
-          value: `**🛡️ CA:** \`${this.armor}\``,
-          inline: true,
-        },
-        {
-          name: '',
-          value: `**🏃 Velocidad:** \`${this.speed}\`ft`,
-          inline: true,
-        },
-        {
-          name: '',
-          value: `**⚡ Iniciativa:** +\`${this.initiative}\``,
-          inline: true,
-        },
-        {
-          name: '',
-          value: `**🎖️ Bono de Comp:** +\`${this.proficiency_bonus}\``,
-          inline: true,
-        },
-        {
-          name: '',
-          value: `
-          > **Fuerza:** \`${this.abilities.str}\` | **TS:** \`${this.saving_throws.str}\`  
-          > **Destreza:** \`${this.abilities.dex}\` | **TS:** \`${this.saving_throws.dex}\`  
-          > **Constitución:** \`${this.abilities.con}\` | **TS:** \`${this.saving_throws.con}\`  
-          > **Inteligencia:** \`${this.abilities.int}\` | **TS:** \`${this.saving_throws.int}\`  
-          > **Sabiduría:** \`${this.abilities.wis}\` | **TS:** \`${this.saving_throws.wis}\`  
-          > **Carisma:** \`${this.abilities.cha}\` | **TS:** \`${this.saving_throws.cha}\``,
-          inline: false,
+          value: Object.entries(ABILITY_NAMES)
+            .map(([key, name]) => this.formatAbilityLine(key as keyof AbilityScores, name))
+            .join('\n')
         },
         {
           name: '> 📚 ***Habilidades***',
-          value: `
-          > - **Acrobacias (Des):** +\`${this.skills.acrobatics}\`  
-          > - **Arcanos (Int):** +\`${this.skills.arcana}\`  
-          > - **Atletismo (Fue):** +\`${this.skills.athletics}\`  
-          > - **Engañar (Car):** +\`${this.skills.deception}\`  
-          > - **Historia (Int):** +\`${this.skills.history}\`  
-          > - **Interpretación (Car):** +\`${this.skills.performance}\`  
-          > - **Intimidar (Car):** +\`${this.skills.intimidation}\`  
-          > - **Investigación (Int):** +\`${this.skills.investigation}\`  
-          > - **Juego de Manos (Des):** +\`${this.skills.sleight_of_hand}\`  
-          > - **Medicina (Sab):** +\`${this.skills.medicine}\`  
-          > - **Naturaleza (Int):** +\`${this.skills.nature}\`  
-          > - **Percepción (Sab):** +\`${this.skills.perception}\`  
-          > - **Perspicacia (Sab):** +\`${this.skills.insight}\`  
-          > - **Persuasión (Car):** +\`${this.skills.persuasion}\`  
-          > - **Religión (Int):** +\`${this.skills.religion}\`  
-          > - **Sigilo (Des):** +\`${this.skills.stealth}\`  
-          > - **Supervivencia (Sab):** +\`${this.skills.survival}\`  
-          > - **Trato con Animales (Sab):** +\`${this.skills.animal_handling}\``,
-          inline: false,
-        },
+          value: SKILL_DEFINITIONS
+            .map(({ name, key, ability }) => this.formatSkillLine(name, key, ability))
+            .join('\n')
+        }
       ],
       footer: {
         text: '📜 Ficha de Personaje - D&D 5e',
         icon_url: this.image_url,
-      },
+      }
     };
+  }
+
+  private formatAbilityLine(key: keyof AbilityScores, name: string) {
+    return `> **${name}:** ${this.formatAbility(
+      this.characteristics[key],
+      this.saving_throws[key],
+      this.saving_throws[key].proficient
+    )}`;
+  }
+
+  private formatSkillLine(name: string, key: keyof Skills, ability: string) {
+    const skill = this.skills[key];
+    return `> - **${name} (${conditionallyUnderline(ability, skill.proficient)}):** \`${
+      this.formatModifier(skill.total)
+    }\``;
   }
 }
