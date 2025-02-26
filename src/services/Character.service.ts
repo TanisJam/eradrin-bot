@@ -4,6 +4,18 @@ import { AttackResult } from '../types/Combat.type';
 import { generateCombatDescription } from '../constants/CombatDescriptions';
 
 class CharacterService {
+  private readonly dndRaces = [
+    'Humano',
+    'Elfo',
+    'Enano',
+    'Mediano',
+    'Dracónido',
+    'Gnomo',
+    'Semielfo',
+    'Semiorco',
+    'Tiefling'
+  ];
+
   async createCharacter(userId: string, name: string, race: string) {
     const character = await Character.create({
       userId,
@@ -152,6 +164,16 @@ class CharacterService {
     );
 
     return character;
+  }
+
+  async generateRandomCharacter(userId: string, username: string) {
+    const randomRace = this.getRandomDndRace();
+    return this.createCharacter(userId, username, randomRace);
+  }
+
+  private getRandomDndRace(): string {
+    const randomIndex = Math.floor(Math.random() * this.dndRaces.length);
+    return this.dndRaces[randomIndex];
   }
 
   private calculateDamage(
