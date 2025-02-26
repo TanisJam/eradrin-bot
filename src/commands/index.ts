@@ -5,3 +5,4 @@ export * as roll from './roll';
 export * as rollstats from './rollstats';
 export * as help from './help';
 export * as rolreset from './rolreset';
+export * as bonk from './bonk';

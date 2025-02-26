@@ -46,7 +46,14 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: CommandInteraction) {
   console.log('ask command executed', interaction.user.globalName);
-  const userName = interaction.user.globalName;
+  let userName = interaction.user.displayName;
+  if (interaction.guild) {
+    const interactionUser = await interaction.guild?.members.fetch(
+      interaction.user.id
+    );
+    const nickName = interactionUser.nickname;
+    userName = nickName || interactionUser.user.username;
+  }
   const question = interaction.options.get('question')?.value as string;
 
   if (!question) {

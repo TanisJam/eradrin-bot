@@ -1,6 +1,7 @@
 import { Client, IntentsBitField } from 'discord.js';
 import config from './config';
 import * as commandsModules from './commands';
+import { initDatabase } from './database/config';
 
 const commands = Object(commandsModules);
 
@@ -14,7 +15,8 @@ export const client = new Client({
   ],
 });
 
-client.once('ready', () => {
+client.once('ready', async () => {
+  await initDatabase();
   console.log('Eradrin is online!');
 });
 
