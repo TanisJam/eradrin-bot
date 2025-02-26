@@ -1,6 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import User from '../database/models/User';
-import General from '../database/models/General';
+import PingHistory from '../database/models/PingHistory';
 
 export const data = new SlashCommandBuilder()
   .setName('ping')
@@ -8,8 +8,8 @@ export const data = new SlashCommandBuilder()
 
 // Return a pong with the last user that used the command and the date, and register the new interaction in the database
 export async function execute(interaction: CommandInteraction) {
-  // Check in General table wath is the last user that used the command
-  const lastPingUserId = await General.findOne({
+  // Check in PingHistory table what is the last user that used the command
+  const lastPingUserId = await PingHistory.findOne({
     order: [['lastPingUserId', 'DESC']],
   });
 
@@ -53,7 +53,7 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     // Register the new interaction in the database
-    await General.create({
+    await PingHistory.create({
       lastPingUserId: userId,
     });
   }

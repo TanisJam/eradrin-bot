@@ -2,21 +2,21 @@ import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '../config';
 import User from './User';
 
-interface GeneralAttributes {
+interface PingHistoryAttributes {
   id: number;
   lastPingUserId: string;
 }
 
-interface GeneralCreationAttributes extends Optional<GeneralAttributes, 'id'> {}
+interface PingHistoryCreationAttributes extends Optional<PingHistoryAttributes, 'id'> {}
 
-class General extends Model<GeneralAttributes, GeneralCreationAttributes> implements GeneralAttributes {
+class PingHistory extends Model<PingHistoryAttributes, PingHistoryCreationAttributes> implements PingHistoryAttributes {
   public id!: number;
   public lastPingUserId!: string;
 
   public lastPingUser?: User;
 }
 
-General.init(
+PingHistory.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -34,12 +34,12 @@ General.init(
   },
   {
     sequelize,
-    modelName: 'General',
+    modelName: 'PingHistory',
   }
 );
 
-// Establecer relaciones
-General.belongsTo(User, { foreignKey: 'lastPingUserId', as: 'lastPingUser' });
-User.hasMany(General, { foreignKey: 'lastPingUserId', as: 'generals' });
+// Associations
+PingHistory.belongsTo(User, { foreignKey: 'lastPingUserId', as: 'lastPingUser' });
+User.hasMany(PingHistory, { foreignKey: 'lastPingUserId', as: 'pingHistory' });
 
-export default General;
+export default PingHistory;
