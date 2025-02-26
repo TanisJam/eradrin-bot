@@ -71,8 +71,15 @@ Character.init(
       },
     },
     conditions: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      defaultValue: [],
+      type: DataTypes.TEXT,
+      defaultValue: '[]',
+      get() {
+        const rawValue = this.getDataValue('conditions');
+        return JSON.parse(rawValue);
+      },
+      set(value: string[]) {
+        this.setDataValue('conditions', JSON.stringify(value));
+      }
     },
   },
   {

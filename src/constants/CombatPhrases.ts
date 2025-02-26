@@ -1,6 +1,6 @@
 export const ATTACK_VERBS = {
   LIGHT: ['rasguña', 'roza', 'araña', 'toca', 'golpea ligeramente', 'alcanza'],
-  MODERATE: ['golpea', 'impacta', 'choca contra', 'castiga', 'azota'],
+  MODERATE: ['golpea', 'impacta', 'daña', 'castiga', 'azota'],
   HEAVY: ['machaca', 'destroza', 'aplasta', 'desgarra', 'tritura'],
   DEVASTATING: ['pulveriza', 'aniquila', 'devasta', 'destruye', 'arrasa']
 };
@@ -50,7 +50,11 @@ export const REACTIONS = {
     'gruñe de dolor',
     'retrocede tambaleante',
     'suelta un quejido',
-    'se encoge'
+    'se encoge',
+    'se tambalea',
+    'se retuerce',
+    'se dobla de dolor',
+    'se muerde el labio'
   ],
   HEAVY: [
     'grita de agonía',

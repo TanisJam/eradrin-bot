@@ -4,3 +4,12 @@ export enum AttackResult {
   SUCCESS = 'SUCCESS',
   CRITICAL_SUCCESS = 'CRITICAL_SUCCESS'
 }
+
+export const BODY_PARTS = [
+  'Cabeza',
+  'Torso',
+  'Brazo Izquierdo',
+  'Brazo Derecho',
+  'Pierna Izquierda',
+  'Pierna Derecha'
+] as const;

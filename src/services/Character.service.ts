@@ -2,6 +2,7 @@ import Character from '../database/models/Character';
 import BodyPart from '../database/models/BodyPart';
 import { AttackResult } from '../types/Combat.type';
 import { generateCombatDescription } from '../constants/CombatDescriptions';
+import User from '../database/models/User';
 
 class CharacterService {
   private readonly dndRaces = [
@@ -13,24 +14,40 @@ class CharacterService {
     'Gnomo',
     'Semielfo',
     'Semiorco',
-    'Tiefling'
+    'Tiefling',
   ];
 
   async createCharacter(userId: string, name: string, race: string) {
+    const existingCharacter = await Character.findOne({ where: { userId } });
+    if (existingCharacter) {
+      return existingCharacter;
+    }
+
     const character = await Character.create({
       userId,
       name,
       race,
+      stats: {
+        strength: 10,
+        endurance: 10,
+        recovery: 5,
+      },
+      status: {
+        bleeding: 0,
+        pain: 0,
+        consciousness: 100,
+        fatigue: 0,
+      },
     });
 
     // Crear partes del cuerpo por defecto
     const bodyParts = [
-      { name: 'Cabeza', health: 100 },
-      { name: 'Torso', health: 100 },
-      { name: 'Brazo Izquierdo', health: 100 },
-      { name: 'Brazo Derecho', health: 100 },
-      { name: 'Pierna Izquierda', health: 100 },
-      { name: 'Pierna Derecha', health: 100 },
+      { name: 'Cabeza', health: 100, type: 'head' },
+      { name: 'Torso', health: 100, type: 'torso' },
+      { name: 'Brazo Izquierdo', health: 100, type: 'arm' },
+      { name: 'Brazo Derecho', health: 100, type: 'arm' },
+      { name: 'Pierna Izquierda', health: 100, type: 'leg' },
+      { name: 'Pierna Derecha', health: 100, type: 'leg' },
     ];
 
     await Promise.all(
@@ -167,6 +184,22 @@ class CharacterService {
   }
 
   async generateRandomCharacter(userId: string, username: string) {
+    const existingCharacter = await Character.findOne({ where: { userId } });
+    if (existingCharacter) {
+      return existingCharacter;
+    }
+
+    const [user] = await User.upsert(
+      {
+        id: userId,
+        nickName: username,
+        lastPing: new Date(),
+      },
+      {
+        fields: ['nickName', 'lastPing'],
+      }
+    );
+
     const randomRace = this.getRandomDndRace();
     return this.createCharacter(userId, username, randomRace);
   }

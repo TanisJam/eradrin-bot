@@ -10,7 +10,7 @@ class BodyPart extends Model {
   declare health: number;
   declare isCritical: boolean;
   declare status: 'healthy' | 'bruised' | 'broken' | 'severed' | 'missing';
-  declare connectedTo: string[];
+  private _connectedTo: string = '[]';
   declare tissue: {
     skin: number;
     muscle: number;
@@ -18,6 +18,14 @@ class BodyPart extends Model {
     nerves: number;
     arteries: number;
   };
+
+  get connectedTo(): string[] {
+    return JSON.parse(this._connectedTo || '[]');
+  }
+
+  set connectedTo(value: string[]) {
+    this._connectedTo = JSON.stringify(value);
+  }
 }
 
 BodyPart.init(
@@ -36,7 +44,7 @@ BodyPart.init(
       allowNull: false,
     },
     type: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM('head', 'torso', 'arm', 'leg'),
       allowNull: false,
     },
     health: {
@@ -54,8 +62,14 @@ BodyPart.init(
       defaultValue: 'healthy',
     },
     connectedTo: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      defaultValue: [],
+      type: DataTypes.TEXT,
+      defaultValue: '[]',
+      get() {
+        return JSON.parse(this.getDataValue('connectedTo') || '[]');
+      },
+      set(val) {
+        this.setDataValue('connectedTo', JSON.stringify(val));
+      }
     },
     tissue: {
       type: DataTypes.JSON,
