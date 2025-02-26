@@ -3,6 +3,7 @@ import {
   ATTACK_VERBS,
   ADVERBS,
   EFFECTS,
+  STATUS_DESCRIPTIONS,
   REACTIONS,
   BODY_PART_DETAILS,
   BLEEDING_DESCRIPTIONS,
@@ -72,6 +73,7 @@ export function generateCombatDescription(
   }
 
   const damageLevel = getDamageLevel(context.damage);
+  const healthState = getHealthState(context.finalHealth);
   const bodyPartDetail = selectRandom(
     BODY_PART_DETAILS[context.bodyPart as keyof typeof BODY_PART_DETAILS]
   );
@@ -94,6 +96,11 @@ export function generateCombatDescription(
   description += `. ${context.defenderName} ${selectRandom(
     REACTIONS[damageLevel]
   )}`;
+
+  // Agregar efectos basados en el estado de salud
+  if (healthState !== 'HEALTHY') {
+    description += `. ${selectRandom(STATUS_DESCRIPTIONS[healthState])}`;
+  }
 
   if (context.bleeding > 50) {
     const bleedIndex = Math.min(Math.floor(context.bleeding / 34), 2);

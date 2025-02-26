@@ -90,3 +90,27 @@ export const CONSCIOUSNESS_DESCRIPTIONS = [
   ['tambalea mareado', 'lucha por mantenerse en pie', 'apenas puede enfocar la vista'],
   ['está al borde del desmayo', 'apenas se mantiene consciente', 'está a punto de colapsar']
 ];
+
+
+export const STATUS_DESCRIPTIONS = {
+  HEALTHY: [
+    'Está en perfectas condiciones',
+    'No muestra signos de daño',
+    'Se mantiene firme y fuerte'
+  ],
+  INJURED: [
+    'Muestra algunas heridas',
+    'Sangra levemente',
+    'Tiene varios moretones'
+  ],
+  SEVERELY_INJURED: [
+    'Está gravemente herido',
+    'Sangra profusamente',
+    'Apenas puede mantenerse en pie'
+  ],
+  CRITICAL: [
+    'Está al borde de la muerte',
+    'Lucha por mantenerse con vida',
+    'Respira con dificultad'
+  ]
+};
