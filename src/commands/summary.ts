@@ -27,6 +27,7 @@ const cooldowns = new Map<string, number>();
 const DEFAULT_MESSAGE_LIMIT = 100;
 const MAX_MESSAGE_LIMIT = 200;
 const DISCORD_API_LIMIT = 100; // Límite de la API de Discord para obtener mensajes
+const DISCORD_MESSAGE_CHAR_LIMIT = 2000; // Límite de caracteres para mensajes de Discord
 
 export const data = new SlashCommandBuilder()
   .setName('summary')
@@ -155,6 +156,91 @@ async function fetchMessages(channel: TextChannel, limit: number): Promise<Colle
   return allMessages;
 }
 
+/**
+ * Divide un texto largo en múltiples partes para respetar el límite de caracteres de Discord
+ */
+function splitMessageContent(content: string, charLimit: number = DISCORD_MESSAGE_CHAR_LIMIT): string[] {
+  if (content.length <= charLimit) {
+    return [content];
+  }
+  
+  const parts: string[] = [];
+  let currentPart = '';
+  
+  // Dividir por párrafos para evitar cortar en medio de una oración
+  const paragraphs = content.split('\n\n');
+  
+  for (const paragraph of paragraphs) {
+    // Si el párrafo por sí solo excede el límite, dividirlo por líneas
+    if (paragraph.length > charLimit) {
+      const lines = paragraph.split('\n');
+      
+      for (const line of lines) {
+        // Si la línea por sí sola excede el límite, dividirla por fragmentos
+        if (line.length > charLimit) {
+          let remainingLine = line;
+          
+          while (remainingLine.length > 0) {
+            // Encontrar un buen punto de división (preferiblemente al final de una oración o después de un espacio)
+            let cutPoint = charLimit;
+            if (cutPoint < remainingLine.length) {
+              // Buscar el último punto o espacio antes del límite
+              const lastPeriod = remainingLine.lastIndexOf('.', cutPoint);
+              const lastSpace = remainingLine.lastIndexOf(' ', cutPoint);
+              
+              if (lastPeriod > 0 && lastPeriod > cutPoint - 30) {
+                cutPoint = lastPeriod + 1; // Incluir el punto
+              } else if (lastSpace > 0) {
+                cutPoint = lastSpace + 1; // Incluir el espacio
+              }
+            }
+            
+            // Si no cabe en la parte actual, añadir nueva parte
+            if (currentPart.length + remainingLine.slice(0, cutPoint).length > charLimit) {
+              parts.push(currentPart);
+              currentPart = remainingLine.slice(0, cutPoint);
+            } else {
+              currentPart += (currentPart.length > 0 ? '\n' : '') + remainingLine.slice(0, cutPoint);
+            }
+            
+            // Preparar para la próxima iteración
+            remainingLine = remainingLine.slice(cutPoint);
+            
+            // Si la parte actual está llena, añadirla a las partes y reiniciar
+            if (currentPart.length >= charLimit * 0.9) {
+              parts.push(currentPart);
+              currentPart = '';
+            }
+          }
+        } else {
+          // Si la línea cabe en la parte actual, añadirla
+          if (currentPart.length + line.length + 1 > charLimit) {
+            parts.push(currentPart);
+            currentPart = line;
+          } else {
+            currentPart += (currentPart.length > 0 ? '\n' : '') + line;
+          }
+        }
+      }
+    } else {
+      // Si el párrafo cabe en la parte actual, añadirlo
+      if (currentPart.length + paragraph.length + 2 > charLimit) {
+        parts.push(currentPart);
+        currentPart = paragraph;
+      } else {
+        currentPart += (currentPart.length > 0 ? '\n\n' : '') + paragraph;
+      }
+    }
+  }
+  
+  // Añadir la última parte si no está vacía
+  if (currentPart.length > 0) {
+    parts.push(currentPart);
+  }
+  
+  return parts;
+}
+
 export async function execute(interaction: CommandInteraction, client: Client) {
   if (!interaction.channel) {
     await interaction.reply('Este comando solo puede ser usado en canales de texto.');
@@ -223,13 +309,24 @@ export async function execute(interaction: CommandInteraction, client: Client) {
     const result = await chatSession.sendMessage(prompt);
     const summary = result.response.text();
 
-    let responseText = `**Resumen de los últimos ${messagesArray.length} mensajes:**\n\n${summary}`;
+    let summaryText = `**Resumen de los últimos ${messagesArray.length} mensajes:**\n\n${summary}`;
     
     if (wasTruncated) {
-      responseText += '\n\n*Nota: La conversación era muy larga y se resumieron solo los mensajes más recientes.*';
+      summaryText += '\n\n*Nota: La conversación era muy larga y se resumieron solo los mensajes más recientes.*';
     }
 
-    await interaction.editReply(responseText);
+    // Dividir el mensaje si es demasiado largo
+    const messageParts = splitMessageContent(summaryText);
+    
+    // Enviar la primera parte como respuesta
+    await interaction.editReply(messageParts[0]);
+    
+    // Enviar partes adicionales como mensajes de seguimiento
+    if (messageParts.length > 1) {
+      for (let i = 1; i < messageParts.length; i++) {
+        await channel.send(messageParts[i]);
+      }
+    }
   } catch (error) {
     console.error('Error al resumir mensajes:', error);
     await interaction.editReply('Hubo un error al intentar resumir los mensajes. Por favor intenta de nuevo más tarde.');
