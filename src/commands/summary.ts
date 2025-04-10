@@ -23,13 +23,17 @@ const MAX_CHARS = MAX_TOKENS_ESTIMATE * AVG_CHARS_PER_TOKEN;
 const COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutos
 const cooldowns = new Map<string, number>();
 
+// Configuración de límites de mensajes
+const DEFAULT_MESSAGE_LIMIT = 100;
+const MAX_MESSAGE_LIMIT = 200;
+
 export const data = new SlashCommandBuilder()
   .setName('summary')
   .setDescription('Resume los últimos mensajes del canal')
   .addIntegerOption((option) =>
     option
       .setName('count')
-      .setDescription('Número de mensajes a resumir (máximo 100)')
+      .setDescription(`Número de mensajes a resumir (máximo ${MAX_MESSAGE_LIMIT}, por defecto ${DEFAULT_MESSAGE_LIMIT})`)
       .setRequired(false)
   );
 
@@ -124,8 +128,8 @@ export async function execute(interaction: CommandInteraction, client: Client) {
   await interaction.deferReply();
   
   try {
-    const count = interaction.options.get('count')?.value as number || 100;
-    const limit = Math.min(count, 100); // Limitar a máximo 100 mensajes
+    const count = interaction.options.get('count')?.value as number || DEFAULT_MESSAGE_LIMIT;
+    const limit = Math.min(count, MAX_MESSAGE_LIMIT); // Limitar al máximo configurado
 
     const channel = interaction.channel as TextChannel;
     const messages = await channel.messages.fetch({ limit });
