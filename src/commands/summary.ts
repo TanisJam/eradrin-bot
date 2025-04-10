@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, TextChannel, Client, Message } from 'discord.js';
+import { CommandInteraction, SlashCommandBuilder, TextChannel, Client, Message, Collection } from 'discord.js';
 import { getAiModel } from '../ai-model';
 
 const systemInstruction =
@@ -26,6 +26,7 @@ const cooldowns = new Map<string, number>();
 // Configuración de límites de mensajes
 const DEFAULT_MESSAGE_LIMIT = 100;
 const MAX_MESSAGE_LIMIT = 200;
+const DISCORD_API_LIMIT = 100; // Límite de la API de Discord para obtener mensajes
 
 export const data = new SlashCommandBuilder()
   .setName('summary')
@@ -107,6 +108,53 @@ function formatTimeLeft(seconds: number): string {
   }
 }
 
+/**
+ * Obtiene mensajes respetando los límites de la API de Discord
+ */
+async function fetchMessages(channel: TextChannel, limit: number): Promise<Collection<string, Message>> {
+  let allMessages = new Collection<string, Message>();
+  
+  if (limit <= DISCORD_API_LIMIT) {
+    // Si está dentro del límite de la API, hacer una sola solicitud
+    return await channel.messages.fetch({ limit });
+  }
+  
+  // Si necesitamos más mensajes que el límite de la API, hacemos múltiples solicitudes
+  let lastMessageId: string | undefined = undefined;
+  let fetchedCount = 0;
+  
+  while (fetchedCount < limit) {
+    const fetchCount = Math.min(limit - fetchedCount, DISCORD_API_LIMIT);
+    const options: { limit: number; before?: string } = { limit: fetchCount };
+    
+    // Si tenemos un ID del último mensaje, usarlo como punto de referencia
+    if (lastMessageId) {
+      options.before = lastMessageId;
+    }
+    
+    const messages = await channel.messages.fetch(options);
+    
+    if (messages.size === 0) break;
+    
+    // Añadir mensajes a la colección
+    for (const [id, message] of messages) {
+      allMessages.set(id, message);
+    }
+    
+    fetchedCount += messages.size;
+    
+    // Obtener el último mensaje para la próxima solicitud
+    const messagesArray = Array.from(messages.values());
+    if (messagesArray.length > 0) {
+      lastMessageId = messagesArray[messagesArray.length - 1].id;
+    } else {
+      break;
+    }
+  }
+  
+  return allMessages;
+}
+
 export async function execute(interaction: CommandInteraction, client: Client) {
   if (!interaction.channel) {
     await interaction.reply('Este comando solo puede ser usado en canales de texto.');
@@ -132,7 +180,9 @@ export async function execute(interaction: CommandInteraction, client: Client) {
     const limit = Math.min(count, MAX_MESSAGE_LIMIT); // Limitar al máximo configurado
 
     const channel = interaction.channel as TextChannel;
-    const messages = await channel.messages.fetch({ limit });
+    
+    // Usar la función personalizada para obtener mensajes respetando el límite de la API
+    const messages = await fetchMessages(channel, limit);
 
     if (messages.size === 0) {
       await interaction.editReply('No hay mensajes para resumir en este canal.');
