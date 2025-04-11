@@ -20,7 +20,7 @@ const AVG_CHARS_PER_TOKEN = 4; // Estimación aproximada
 const MAX_CHARS = MAX_TOKENS_ESTIMATE * AVG_CHARS_PER_TOKEN;
 
 // Configuración de cooldown (en milisegundos)
-const COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutos
+const COOLDOWN_TIME = 1 * 60 * 1000; // 1 minuto
 const cooldowns = new Map<string, number>();
 
 // Configuración de límites de mensajes
