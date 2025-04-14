@@ -21,6 +21,64 @@ export class CharacterService extends BaseService {
     'Tiefling',
   ];
 
+  // Modificadores de estadísticas para cada raza
+  private readonly raceStats = {
+    'Humano': {
+      strength: 10,
+      agility: 10,
+      endurance: 10,
+      recovery: 10
+    },
+    'Elfo': {
+      strength: 8,
+      agility: 14, 
+      endurance: 8,
+      recovery: 10
+    },
+    'Enano': {
+      strength: 12,
+      agility: 7,
+      endurance: 14,
+      recovery: 12
+    },
+    'Mediano': {
+      strength: 7,
+      agility: 12,
+      endurance: 9,
+      recovery: 11
+    },
+    'Dracónido': {
+      strength: 13,
+      agility: 8,
+      endurance: 12,
+      recovery: 7
+    },
+    'Gnomo': {
+      strength: 6,
+      agility: 13,
+      endurance: 8,
+      recovery: 8
+    },
+    'Semielfo': {
+      strength: 9,
+      agility: 12,
+      endurance: 9,
+      recovery: 10
+    },
+    'Semiorco': {
+      strength: 14,
+      agility: 8,
+      endurance: 11,
+      recovery: 8
+    },
+    'Tiefling': {
+      strength: 10,
+      agility: 11,
+      endurance: 9,
+      recovery: 13
+    }
+  };
+
   constructor() {
     super('CharacterService');
   }
@@ -38,14 +96,19 @@ export class CharacterService extends BaseService {
         return existingCharacter;
       }
 
+      // Obtener estadísticas basadas en la raza o usar valores predeterminados si la raza no está definida
+      const stats = this.raceStats[race as keyof typeof this.raceStats] || this.raceStats['Humano'];
+      this.logDebug(`Aplicando estadísticas de raza ${race}: ${JSON.stringify(stats)}`);
+
       const character = await Character.create({
         userId,
         name,
         race,
         stats: {
-          strength: 10,
-          endurance: 10,
-          recovery: 5,
+          strength: stats.strength,
+          agility: stats.agility,
+          endurance: stats.endurance,
+          recovery: stats.recovery,
         },
         status: {
           bleeding: 0,
@@ -105,9 +168,11 @@ export class CharacterService extends BaseService {
 
       // Verificar si hay un modificador temporal de defensa en el defensor
       let defenseModifier = 1.0;
+      let isDefending = false;
       const defenseModCondition = defender.conditions.find(c => c.startsWith('defending_'));
       if (defenseModCondition) {
         defenseModifier = parseFloat(defenseModCondition.split('_')[1]);
+        isDefending = true;
         this.logDebug(`El defensor tiene modificador de defensa: ${defenseModifier}`);
         
         // Limpiar la condición de defensa después de usarla
@@ -115,11 +180,17 @@ export class CharacterService extends BaseService {
         await defender.save();
       }
 
-      const roll = this.rollD20();
+      const baseRoll = this.rollD20();
       
-      // Aplicar modificador de ataque a la tirada si la precisión se ve afectada
-      const effectiveRoll = Math.floor(roll * attackModifier);
-      this.logDebug(`Tirada original: ${roll}, Tirada efectiva con modificador: ${effectiveRoll}`);
+      // Aplicar la agilidad como bono a la tirada (cada punto por encima de 10 da +5% de precisión)
+      const agilityBonus = (attacker.stats.agility - 10) * 0.05;
+      let agilityModifier = 1.0 + Math.max(-0.5, Math.min(0.5, agilityBonus)); // Limitar entre 0.5 y 1.5
+      
+      this.logDebug(`Bono de agilidad: ${attacker.stats.agility} => modificador ${agilityModifier.toFixed(2)}`);
+      
+      // Aplicar modificadores a la tirada
+      const effectiveRoll = Math.floor(baseRoll * attackModifier * agilityModifier);
+      this.logDebug(`Tirada base: ${baseRoll}, con modificadores (ataque: ${attackModifier}, agilidad: ${agilityModifier.toFixed(2)}): ${effectiveRoll}`);
       
       const attackResult = this.getAttackResult(effectiveRoll);
       this.logDebug(`Resultado de tirada (${effectiveRoll}): ${attackResult}`);
@@ -132,7 +203,7 @@ export class CharacterService extends BaseService {
         return this.handleFailure(attacker, defender, targetBodyPart);
       }
 
-      return this.handleSuccess(attacker, defender, targetBodyPart, attackResult, attackModifier, defenseModifier);
+      return this.handleSuccess(attacker, defender, targetBodyPart, attackResult, attackModifier, defenseModifier, isDefending);
     } catch (error) {
       return this.handleError(error, `Error al realizar ataque`);
     }
@@ -240,7 +311,8 @@ export class CharacterService extends BaseService {
     targetBodyPart: string, 
     attackResult: AttackResult,
     attackModifier: number = 1.0,
-    defenseModifier: number = 1.0
+    defenseModifier: number = 1.0,
+    isDefending: boolean = false
   ) {
     this.logDebug(`Procesando ataque exitoso: ${attacker.name} -> ${defender.name} (${targetBodyPart})`);
     this.logDebug(`Tipo de ataque: ${attackResult}`);
@@ -248,12 +320,13 @@ export class CharacterService extends BaseService {
     // Log del estado inicial
     this.logDebug('ESTADO INICIAL:');
     this.logDebug(`Atacante (${attacker.name}) - Fuerza: ${attacker.stats.strength}`);
-    this.logDebug(`Defensor (${defender.name}) - Resistencia: ${defender.stats.endurance}, Status: ${JSON.stringify(defender.status)}`);
+    this.logDebug(`Defensor (${defender.name}) - Resistencia: ${defender.stats.endurance}, Agilidad: ${defender.stats.agility}, Status: ${JSON.stringify(defender.status)}`);
     
     // Calcular daño con modificadores
     const baseDamage = this.calculateDamage(
       attacker.stats.strength * attackModifier, // Fuerza modificada por el estado
-      defender.stats.endurance * defenseModifier // Resistencia modificada por defensa
+      defender.stats.endurance * defenseModifier, // Resistencia modificada por defensa
+      defender.stats.agility // Agilidad del defensor
     );
     
     const damage = attackResult === AttackResult.CRITICAL_SUCCESS
@@ -309,7 +382,8 @@ export class CharacterService extends BaseService {
     this.logDebug(`Antes: ${previousStatus}`);
     this.logDebug(`Después: ${JSON.stringify(newStatus)}`);
 
-    const description = generateCombatDescription(attackResult, {
+    // Generar la descripción del ataque
+    let description = generateCombatDescription(attackResult, {
       attackerName: attacker.name,
       defenderName: defender.name,
       bodyPart: targetBodyPart,
@@ -318,6 +392,12 @@ export class CharacterService extends BaseService {
       bleeding: newStatus.bleeding,
       consciousness: newStatus.consciousness,
     });
+
+    // Si el defensor estaba defendiendo, añadir una frase adicional sobre la reducción del daño
+    if (isDefending) {
+      const damageReduction = Math.round((1 - defenseModifier) * 100);
+      description += ` ${defender.name} logra reducir el impacto en un ${damageReduction}% gracias a su postura defensiva.`;
+    }
 
     return {
       result: attackResult,
@@ -367,13 +447,10 @@ export class CharacterService extends BaseService {
 
       // Recuperar estado
       character.status = {
-        bleeding: Math.max(0, character.status.bleeding - recoveryAmount),
-        pain: Math.max(0, character.status.pain - recoveryAmount),
-        consciousness: Math.min(
-          100,
-          character.status.consciousness + recoveryAmount
-        ),
-        fatigue: Math.max(0, character.status.fatigue - recoveryAmount),
+        bleeding: Math.round((Math.max(0, character.status.bleeding - recoveryAmount)) * 10) / 10,
+        pain: Math.round((Math.max(0, character.status.pain - recoveryAmount)) * 10) / 10,
+        consciousness: Math.round((Math.min(100, character.status.consciousness + recoveryAmount)) * 10) / 10,
+        fatigue: Math.round((Math.max(0, character.status.fatigue - recoveryAmount)) * 10) / 10,
       };
 
       await character.save();
@@ -488,20 +565,32 @@ export class CharacterService extends BaseService {
 
   private calculateDamage(
     attackerStrength: number,
-    defenderEndurance: number
+    defenderEndurance: number,
+    defenderAgility: number = 10 // Valor predeterminado si no se proporciona
   ): number {
     // Aumentamos el daño base y reducimos la mitigación para hacer combates más rápidos
     const baseDamage = attackerStrength * 1.5; // Multiplicador aumentado
-    const resistance = defenderEndurance * 0.3; // Reducción de resistencia
-    return Math.max(2, Math.floor(baseDamage - resistance)); // Mínimo 2 de daño
+    
+    // La resistencia proporciona mitigación base
+    const enduranceResistance = defenderEndurance * 0.3;
+    
+    // La agilidad proporciona evitación parcial de daño
+    // Cada punto de agilidad por encima de 10 reduce el daño en un 1% adicional
+    const agilityBonus = Math.max(0, (defenderAgility - 10) * 0.01);
+    const agilityResistance = baseDamage * agilityBonus;
+    
+    // El total de la resistencia es la suma de ambos factores
+    const totalResistance = enduranceResistance + agilityResistance;
+    
+    return Math.max(2, Math.floor(baseDamage - totalResistance)); // Mínimo 2 de daño
   }
 
   private updateStatus(currentStatus: any, damage: number) {
     return {
-      bleeding: Math.min(100, currentStatus.bleeding + damage * 0.2),
-      pain: Math.min(100, currentStatus.pain + damage * 0.3),
-      consciousness: Math.max(0, currentStatus.consciousness - damage * 0.1),
-      fatigue: Math.min(100, currentStatus.fatigue + damage * 0.15),
+      bleeding: Math.round((Math.min(100, currentStatus.bleeding + damage * 0.2)) * 10) / 10,
+      pain: Math.round((Math.min(100, currentStatus.pain + damage * 0.3)) * 10) / 10,
+      consciousness: Math.round((Math.max(0, currentStatus.consciousness - damage * 0.1)) * 10) / 10,
+      fatigue: Math.round((Math.min(100, currentStatus.fatigue + damage * 0.15)) * 10) / 10,
     };
   }
 
@@ -510,7 +599,7 @@ export class CharacterService extends BaseService {
   }
 
   private getAttackResult(roll: number): AttackResult {
-    if (roll === 20) return AttackResult.CRITICAL_SUCCESS;
+    if (roll >= 20) return AttackResult.CRITICAL_SUCCESS;
     if (roll >= 15) return AttackResult.SUCCESS;
     if (roll >= 6) return AttackResult.PARTIAL_SUCCESS;
     if (roll >= 2) return AttackResult.FAILURE;

@@ -153,7 +153,7 @@ export class CombatService extends BaseService {
       description = `🩸 ${character.name} sufre una hemorragia masiva, perdiendo grandes cantidades de sangre.`;
       
       // Reducir consciencia significativamente
-      character.status.consciousness = Math.max(0, character.status.consciousness - 15);
+      character.status.consciousness = Math.round((Math.max(0, character.status.consciousness - 15)) * 10) / 10;
       
       // Posibilidad de muerte
       if (character.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.CRITICAL) {
@@ -174,13 +174,13 @@ export class CombatService extends BaseService {
     } else if (character.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
       bleedingDamage = 6; // Daño severo
       description = `🩸 ${character.name} pierde mucha sangre, debilitándose visiblemente con cada movimiento.`;
-      character.status.consciousness = Math.max(0, character.status.consciousness - 8);
+      character.status.consciousness = Math.round((Math.max(0, character.status.consciousness - 8)) * 10) / 10;
       character.conditions = [...character.conditions.filter(c => 
         c !== 'ok' && c !== 'bleeding'), 'severe_bleeding'];
     } else if (character.status.bleeding >= THRESHOLDS.BLEEDING.MEDIUM) {
       bleedingDamage = 3; // Daño moderado
       description = `🩸 ${character.name} sigue sangrando, su piel palidece.`;
-      character.status.consciousness = Math.max(0, character.status.consciousness - 4);
+      character.status.consciousness = Math.round((Math.max(0, character.status.consciousness - 4)) * 10) / 10;
       character.conditions = [...character.conditions.filter(c => c !== 'ok'), 'bleeding'];
     } else {
       bleedingDamage = 1; // Daño leve
@@ -193,7 +193,7 @@ export class CombatService extends BaseService {
     
     // Incrementar el valor de sangrado gradualmente si es alto (simula empeorar)
     if (character.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
-      character.status.bleeding = Math.min(100, character.status.bleeding + 3);
+      character.status.bleeding = Math.round((Math.min(100, character.status.bleeding + 3)) * 10) / 10;
     }
     
     await character.save();
@@ -487,8 +487,28 @@ export class CombatService extends BaseService {
           // El efecto de defensa es menos efectivo si el personaje está en mal estado
           const defenseEffectiveness = this.getDefenseEffectiveness(activeCharacter);
           
+          // Calcular porcentaje de reducción de daño para mostrar al jugador
+          const damageReductionPercentage = Math.round(defenseEffectiveness * 100);
+          
+          // Añadir pequeños beneficios de recuperación al defender (menos que al usar 'recover')
+          // Reducir fatiga y dolor levemente
+          activeCharacter.status.fatigue = Math.round((Math.max(0, activeCharacter.status.fatigue - 5)) * 10) / 10;
+          activeCharacter.status.pain = Math.round((Math.max(0, activeCharacter.status.pain - 5)) * 10) / 10;
+          
+          // Crear descripción más informativa
+          let defenseDesc = '';
+          if (defenseEffectiveness >= 0.9) {
+            defenseDesc = `con una postura perfecta, reducirá el próximo ataque en un ${damageReductionPercentage}%`;
+          } else if (defenseEffectiveness >= 0.7) {
+            defenseDesc = `con buena postura, reducirá el próximo ataque en un ${damageReductionPercentage}%`;
+          } else if (defenseEffectiveness >= 0.5) {
+            defenseDesc = `con dificultad, reducirá el próximo ataque en un ${damageReductionPercentage}%`;
+          } else {
+            defenseDesc = `con gran dificultad, apenas logrando reducir el próximo ataque en un ${damageReductionPercentage}%`;
+          }
+          
           actionResult = {
-            description: `${activeCharacter.name} adopta una postura defensiva${defenseEffectiveness < 1 ? ' con dificultad' : ''}, preparándose para el próximo ataque.`
+            description: `${activeCharacter.name} adopta una postura defensiva ${defenseDesc}. Esto también le permite recuperar algo de aliento.`
           };
           
           // Añadir algún efecto temporal de defensa

@@ -407,132 +407,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             return;
           }
           
-          // Manejar diferentes tipos de botones según su ID
-          if (i.customId.startsWith('part_')) {
-            // Manejar botones de partes del cuerpo
-            const [_, combatId, bodyPart] = i.customId.split('_');
-            const currentCharId = i.user.id === interaction.user.id ? attackerChar!.id : defenderChar!.id;
-            
-            try {
-              const result = await combatService.processTurn(
-                Number(combatId),
-                currentCharId,
-                'attack',
-                bodyPart
-              );
-              
-              // Verificar si el combate ha terminado
-              if (result.message) {
-                // Actualizar caracteres
-                attackerChar = await Character.findByPk(attackerChar!.id);
-                defenderChar = await Character.findByPk(defenderChar!.id);
-                
-                // Obtener las partes del cuerpo para la información final
-                const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-                const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-                
-                const finalEmbed = new EmbedBuilder()
-                  .setColor(0x00FF00)
-                  .setTitle('¡Combate finalizado!')
-                  .setDescription(result.message)
-                  .addFields(
-                    { 
-                      name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                      value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                      inline: true 
-                    },
-                    { 
-                      name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                      value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                      inline: true 
-                    },
-                    { name: '\u200B', value: '\u200B' },
-                    { 
-                      name: '🩹 Heridas finales', 
-                      value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                      inline: false 
-                    }
-                  )
-                  .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
-                  
-                await i.update({ embeds: [finalEmbed], components: [] });
-                collector.stop();
-                return;
-              }
-              
-              // Línea 183: Agregamos un log para ver lo que está pasando
-              console.log(`ID actualCharacterId: ${result.combat.currentCharacterId}, attackerChar ID: ${attackerChar!.id}, defenderChar ID: ${defenderChar!.id}`);
-              
-              // Verificar directamente qué personaje tiene el turno ahora
-              const nextPlayer = result.combat.currentCharacterId === attackerChar!.id 
-                ? interaction.user 
-                : targetUser;
-                
-              // Actualizar caracteres
-              attackerChar = await Character.findByPk(attackerChar!.id);
-              defenderChar = await Character.findByPk(defenderChar!.id);
-              
-              // Obtener las partes del cuerpo para cada personaje
-              const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-              const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-              
-              const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
-              const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
-              
-              const updatedEmbed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
-                .setDescription(result.actionResult.description)
-                .addFields(
-                  { 
-                    name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                    value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                    inline: true 
-                  },
-                  { 
-                    name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                    value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                    inline: true 
-                  },
-                  { name: '\u200B', value: '\u200B' },
-                  { 
-                    name: '🩹 Heridas', 
-                    value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                    inline: false 
-                  },
-                  { name: '⏱️ Turno de', value: `${nextPlayer.displayName || nextPlayer.username}`, inline: false }
-                )
-                .setFooter({ text: `Combate #${result.combat.id} - Ronda ${result.combat.roundCount}` });
-                
-                // Actualizar el embed original para futuros usos
-                embed = updatedEmbed;
-
-                await i.update({ 
-                  content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${nextPlayer.displayName || nextPlayer.username}**`,
-                  embeds: [updatedEmbed], 
-                  components: [actionRow] 
-                });
-            } catch (error) {
-              console.error('Error al procesar ataque:', error);
-              await i.reply({ content: 'Ocurrió un error al procesar tu ataque', ephemeral: true });
-            }
-            return;
-          }
-          
-          if (i.customId.startsWith('cancel_')) {
-            // Manejar botón de cancelar selección
-            // Preparar mensaje con información del turno actual
-            const currentPlayer = currentTurnUserId === interaction.user.id 
-              ? interaction.user.displayName 
-              : targetUser.displayName;
-              
-            await i.update({ 
-              content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${currentPlayer}**`,
-              components: [actionRow] 
-            });
-            return;
-          }
-          
           // Extraer acción y ID del combate para botones principales
           const [action, combatId] = i.customId.split('_');
           
@@ -580,36 +454,117 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           }
           
           if (action === 'attack') {
-            // Para ataques, mostrar selectores de partes del cuerpo
-            const bodyPartButtons = BODY_PARTS.map(part => {
-              return new ButtonBuilder()
-                .setCustomId(`part_${combatId}_${part}`)
-                .setLabel(part)
-                .setStyle(ButtonStyle.Danger);
-            });
+            // Elegir una parte del cuerpo al azar
+            const randomBodyPart = BODY_PARTS[Math.floor(Math.random() * BODY_PARTS.length)];
+            const currentCharId = i.user.id === interaction.user.id ? attackerChar!.id : defenderChar!.id;
             
-            // Crear filas de acción para los botones (máximo 5 por fila)
-            const actionRows = [];
-            for (let j = 0; j < bodyPartButtons.length; j += 5) {
-              const row = new ActionRowBuilder<ButtonBuilder>()
-                .addComponents(bodyPartButtons.slice(j, j + 5));
-              actionRows.push(row);
-            }
-            
-            // Añadir botón para cancelar
-            const cancelRow = new ActionRowBuilder<ButtonBuilder>()
-              .addComponents(
-                new ButtonBuilder()
-                  .setCustomId(`cancel_${combatId}`)
-                  .setLabel('Cancelar')
-                  .setStyle(ButtonStyle.Secondary)
+            try {
+              // Mostrar mensaje de qué parte se está atacando
+              await i.update({ 
+                content: `**Atacando aleatoriamente la ${randomBodyPart}...**`,
+                components: [] 
+              });
+              
+              const result = await combatService.processTurn(
+                Number(combatId),
+                currentCharId,
+                'attack',
+                randomBodyPart
               );
-            actionRows.push(cancelRow);
-            
-            await i.update({ 
-              content: '**Selecciona una parte del cuerpo para atacar:**',
-              components: actionRows 
-            });
+              
+              // Verificar si el combate ha terminado
+              if (result.message) {
+                // Actualizar caracteres
+                attackerChar = await Character.findByPk(attackerChar!.id);
+                defenderChar = await Character.findByPk(defenderChar!.id);
+                
+                // Obtener las partes del cuerpo para la información final
+                const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
+                const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+                
+                // Crear el embed final del combate
+                const finalEmbed = new EmbedBuilder()
+                  .setColor(0x00FF00)
+                  .setTitle('¡Combate finalizado!')
+                  .setDescription(result.message)
+                  .addFields(
+                    { 
+                      name: `${attackerChar!.name} [${attackerChar!.race}]`, 
+                      value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                      inline: true 
+                    },
+                    { 
+                      name: `${defenderChar!.name} [${defenderChar!.race}]`, 
+                      value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                      inline: true 
+                    },
+                    { name: '\u200B', value: '\u200B' },
+                    { 
+                      name: '🩹 Heridas finales', 
+                      value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
+                      inline: false 
+                    }
+                  )
+                  .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
+                
+                await i.editReply({ embeds: [finalEmbed], components: [] });
+                collector.stop();
+                return;
+              }
+              
+              // Si el combate no ha terminado, determinar quién tiene el próximo turno
+              const nextPlayer = result.combat.currentCharacterId === attackerChar!.id 
+                ? interaction.user 
+                : targetUser;
+              
+              // Actualizar caracteres
+              attackerChar = await Character.findByPk(attackerChar!.id);
+              defenderChar = await Character.findByPk(defenderChar!.id);
+              
+              // Obtener las partes del cuerpo para cada personaje
+              const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
+              const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+              
+              const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
+              const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
+              
+              const updatedEmbed = new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
+                .setDescription(result.actionResult.description)
+                .addFields(
+                  { 
+                    name: `${attackerChar!.name} [${attackerChar!.race}]`, 
+                    value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                    inline: true 
+                  },
+                  { 
+                    name: `${defenderChar!.name} [${defenderChar!.race}]`, 
+                    value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                    inline: true 
+                  },
+                  { name: '\u200B', value: '\u200B' },
+                  { 
+                    name: '🩹 Heridas', 
+                    value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
+                    inline: false 
+                  },
+                  { name: '⏱️ Turno de', value: `${nextPlayer.displayName || nextPlayer.username}`, inline: false }
+                )
+                .setFooter({ text: `Combate #${result.combat.id} - Ronda ${result.combat.roundCount}` });
+                
+                // Actualizar el embed original para futuros usos
+                embed = updatedEmbed;
+
+                await i.editReply({ 
+                  content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${nextPlayer.displayName || nextPlayer.username}**`,
+                  embeds: [updatedEmbed], 
+                  components: [actionRow] 
+                });
+            } catch (error) {
+              console.error('Error al procesar ataque:', error);
+              await i.reply({ content: 'Ocurrió un error al procesar tu ataque', ephemeral: true });
+            }
             return;
           }
           
