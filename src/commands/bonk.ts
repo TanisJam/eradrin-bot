@@ -1,8 +1,11 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import CharacterService from '../services/Character.service';
+import { CharacterService } from '../services/Character.service';
 import Character from '../database/models/Character';
 import { BODY_PARTS } from '../types/Combat.type';
 import { getAiModel } from '../ai-model';
+
+// Crear una instancia del servicio
+const characterService = new CharacterService();
 
 const systemInstruction =
   'Eres un narrador de combates al estilo Dwarf Fortress. Te daré una descripción básica de un ataque y debes transformarla ' +
@@ -53,7 +56,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
 
       if (!attackerChar) {
-        attackerChar = await CharacterService.generateRandomCharacter(
+        attackerChar = await characterService.generateRandomCharacter(
           interaction.user.id,
           interaction.user.username
         );
@@ -64,14 +67,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
 
       if (!defenderChar) {
-        defenderChar = await CharacterService.generateRandomCharacter(
+        defenderChar = await characterService.generateRandomCharacter(
           targetUser.id,
           targetUser.username
         );
       }
 
       // Ejecutar el ataque a una parte del cuerpo aleatoria
-      const result = await CharacterService.attack(
+      const result = await characterService.attack(
         attackerChar.id,
         defenderChar.id,
         BODY_PARTS[Math.floor(Math.random() * BODY_PARTS.length)]

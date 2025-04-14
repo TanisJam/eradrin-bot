@@ -7,12 +7,13 @@ export const execute = async (interaction: CommandInteraction) => {
   const [user] = await User.findOrCreate({
     where: { id: userId },
     defaults: {
+      id: userId,
       nickName: interaction.user.username,
-      points: 0,
+      lastPing: new Date(),
     },
   });
 
-  await interaction.reply(`Tienes ${user} puntos!`);
+  await interaction.reply(`Hola ${user.nickName}! Gracias por usar este comando.`);
 };
 
 export const data = {
