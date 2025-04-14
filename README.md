@@ -42,7 +42,7 @@ src/
 - `/roll`: Dice rolling
 - `/rollstats`: Rolling statistics
 - `/help`: Shows help for available commands
-- `/bonk`: Sends a "bonk" to another user
+- `/duel`: Start a turn-based combat with another user
 - `/summary`: Generates text summaries
 
 ## Technologies Used
