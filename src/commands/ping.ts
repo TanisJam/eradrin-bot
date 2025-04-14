@@ -1,70 +1,98 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import User from '../database/models/User';
 import PingHistory from '../database/models/PingHistory';
+import { Command } from '../types/Command';
+import { logger } from '../utils/logger';
 
+/**
+ * Comando ping - Responde con Pong y registra la interacción
+ */
 export const data = new SlashCommandBuilder()
   .setName('ping')
-  .setDescription('Replies with Pong!');
+  .setDescription('Responde con Pong y muestra el último usuario que usó el comando');
 
-// Return a pong with the last user that used the command and the date, and register the new interaction in the database
+/**
+ * Implementación del comando ping
+ * Registra la interacción y muestra el último usuario que usó el comando
+ */
 export async function execute(interaction: CommandInteraction) {
-  // Check in PingHistory table what is the last user that used the command
-  const lastPingUserId = await PingHistory.findOne({
-    order: [['lastPingUserId', 'DESC']],
-  });
-
-  let lastPingUser = null;
-
-  // check if there is a last ping user
-
   try {
-    lastPingUser = await User.findOne({
-      where: { id: lastPingUserId?.lastPingUserId },
-    });
-  } catch (error) {
-    console.log('No hay un último usuario');
-  }
-
-  if (interaction.guild) {
-    const interactionUser = await interaction.guild?.members.fetch(
-      interaction.user.id
-    );
-    const nickName = interactionUser.nickname;
-    const userId = interactionUser.id;
-    const date = new Date();
-
-    // Find the new user in the database and update the lastPing date or create a new user
-    const [user] = await User.findOrCreate({
-      where: { id: userId },
-      defaults: {
-        nickName: nickName,
-        lastPing: date,
-      },
+    logger.debug('Iniciando ejecución del comando ping');
+    
+    // Buscar el último usuario que usó el comando
+    const lastPingHistory = await PingHistory.findOne({
+      order: [['createdAt', 'DESC']],
     });
 
-    // Update the user
-    if (!user.isNewRecord) {
-      await User.update(
-        { lastPing: date },
-        {
-          where: { id: userId },
-        }
-      );
+    let lastPingUser = null;
+    if (lastPingHistory?.lastPingUserId) {
+      try {
+        lastPingUser = await User.findOne({
+          where: { id: lastPingHistory.lastPingUserId },
+        });
+      } catch (error) {
+        logger.error('Error al buscar el último usuario:', error);
+      }
     }
 
-    // Register the new interaction in the database
-    await PingHistory.create({
-      lastPingUserId: userId,
-    });
-  }
+    // Solo proceder si la interacción ocurre en un servidor
+    if (!interaction.guild) {
+      await interaction.reply('Este comando solo puede ser usado en un servidor.');
+      return;
+    }
 
-  // Reply with the last user that used the command and the date if there is a last ping user
+    // Obtener información del usuario que ejecutó el comando
+    const member = await interaction.guild.members.fetch(interaction.user.id);
+    const nickName = member.nickname || member.user.username;
+    const userId = member.id;
+    const currentDate = new Date();
+    // No usamos avatarUrl por ahora debido a problemas con la columna
 
-  if (lastPingUserId) {
-    await interaction.reply(
-      `Pong! Último usuario: ${lastPingUser?.nickName} Fecha: ${lastPingUser?.lastPing}`
-    );
-  } else {
-    await interaction.reply('Pong!');
+    // Registrar o actualizar el usuario en la base de datos
+    try {
+      const [user, created] = await User.findOrCreate({
+        where: { id: userId },
+        defaults: {
+          id: userId,
+          nickName: nickName,
+          lastPing: currentDate,
+          // No se incluye el campo avatar
+        },
+      });
+
+      // Si el usuario ya existía, actualizar los datos
+      if (!created) {
+        await User.update(
+          { 
+            lastPing: currentDate,
+            nickName: nickName,
+            // No se incluye el campo avatar
+          },
+          { where: { id: userId } }
+        );
+      }
+
+      // Registrar la interacción en el historial
+      await PingHistory.create({
+        lastPingUserId: userId,
+      });
+
+      logger.debug('Usuario y historial de ping actualizados correctamente');
+    } catch (error) {
+      logger.error('Error al actualizar usuario o historial:', error);
+    }
+
+    // Responder con la información del último usuario
+    if (lastPingUser) {
+      const formattedDate = lastPingUser.lastPing?.toLocaleString('es') || 'Fecha desconocida';
+      await interaction.reply(
+        `🏓 Pong! Último usuario: ${lastPingUser.nickName} (Fecha: ${formattedDate})`
+      );
+    } else {
+      await interaction.reply('🏓 Pong! Eres el primer usuario en usar este comando.');
+    }
+  } catch (error) {
+    logger.error('Error general en comando ping:', error);
+    await interaction.reply('Ha ocurrido un error al ejecutar el comando. Inténtalo de nuevo más tarde.');
   }
 }
