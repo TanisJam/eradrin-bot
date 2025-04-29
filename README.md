@@ -1,9 +1,11 @@
 <div align="center">
-<img width="196px" alt="Eradrin Image" src="./assets/Eradrin.png">
+<img width="196px" alt="Eradrin Image" src="./assets/Eradrin.png"/>
 
 # Eradrin Bot
 
 Discord bot for role-playing games management and social activities.
+
+</div>
 
 ## Project Structure
 
@@ -126,7 +128,6 @@ Contributions are welcome. Please follow these steps:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-</div>
 
 # ✨ Features
 
