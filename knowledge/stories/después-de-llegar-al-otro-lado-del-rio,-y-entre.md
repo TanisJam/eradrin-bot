@@ -1,0 +1,9 @@
+# Después de llegar al otro lado del rio, y entre otras cuestiones, por fin dimos con la tribu gnoll. Me encontré a Jorge y le expliqué otras cuestiones sobre el pago de impuestos después le propusimos 
+
+Después de llegar al otro lado del rio, y entre otras cuestiones, por fin dimos con la tribu gnoll. Me encontré a Jorge y le expliqué otras cuestiones sobre el pago de impuestos después le propusimos la idea anexarlos a la ciudad koboldin del que me comentó Zai, todo iba bien, el jefe de la aldea, Murphy, nos recibió y le comentamos todo y poder convencerlo de llegar a algún acuerdo, el resto del día fue hablar con la gente del pueblo, se nota que viven en un lugar bastante precario pero aún así tenian mucha resiliencia 
+Note en Disterm que tenía una buena química con Jorge el Gnoll, parece que presencie el inicio de algo muy lindo. Hablando de Disterm, cuando termino la noche, había acordado pelear con un Gnoll fuerte, decidí ir a presenciar la pelea en caso de que le pase algo, ella salió Victoriosa pero no ilesa, le di asistencia médica con mi kit y después de eso termino mi día 
+Al día siguiente Lennef como una tormenta me desperto diciendo que su espada fue robada, lo cual me preocupo, mientras investigamos descubrimos rasto de nieve en su habitación, pero no pudimos seguir investigando por qué de repente escuchamos un grito fuerte en la torre del jefe Murphy, cuando llegamos su cuerpo yacia en el piso con la espada de Lennef atravesandolo.
+Quisieron inculparnos pero rápidamente invertimos la situación y dejamos la verdad al descubierto, todo seguía, pero Murphy murió deseando el poder llevar a su pueblo a un lugar mejor 
+Todo seguía normal, volvimos sobre nuestro camino, Jorge vino nosostros a Silverymoon, le compraron una Mochila para que lleve sus cosas, y carne cruda
+Hasta aquí todo, salimos ilesos y algunos con ilusión de poder haber ayudado a los Gnolls a tener un mejor lugar y hogar para vivir
+

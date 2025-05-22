@@ -1,0 +1,10 @@
+# En este reinicio crean un plan tomando en cuenta que ahora el reloj solo tiene 5 patas. Esta vez la voz dice: Puedo retardar sus muertes, pero salgan antes de que deje de poder. 
+
+Davlen iría a la sal
+
+En este reinicio crean un plan tomando en cuenta que ahora el reloj solo tiene 5 patas. Esta vez la voz dice: Puedo retardar sus muertes, pero salgan antes de que deje de poder. 
+
+Davlen iría a la sala donde se encontraba la caja con el juego mientras los demás esperarían en el teatro a que la araña busque a Davlen. Falla nuevamente en el juego y atrae a la araña, aunque logra esconderse de esta. Los demás aprovechan que la araña no está y corren hacia el patio de comida. Inspeccionan el lugar y terminan encontrando un tercio de una llave perteneciente a la cerradura de la puerta bloqueada. Finalmente, Davlen es encontrado luego de distraer a la araña con mano de mago y es asesinado. Vuelven al teatro, y se dan cuenta de que su compañero no volvía. Velamor va a la sala de cajas para completar el juego mientras Della y Fig se quedan en el teatro. Della se pone a inspeccionar el teatro, subiéndose al escenario donde siente la presencia de una persona que ya se había ido. Se coloca en donde estaría esta presencia y comienza a tocar una especie de cello espectral, aunque no ocurre nada. Mientras tanto, Velamor llega a la sala y procede a jugar al buscaminas, completándolo y obteniendo un papel parecido al del cartel que se en el centro de la habitación. Velamor procede a dárselo a la criatura que estaba dentro de la jaula y esta le da un tercio de la llave. La araña encuentra a Velamor y empieza a perseguirlo. Velamor logra escapar y entra al teatro para luego bloquear la puerta. Della y Fig ayudan a bloquear la puerta y se preparan para tirar la cuerda, pero Della le avisa a Velamor que en el escenario aparecen instrumentos espectrales. Corren hacia el escenario para tocar los instrumentos mientras la araña irrumpe en el teatro. Comienzan a tocar los instrumentos (Fig toca una trompeta y Velamor un saxofón) y con la música jazz relajan a la araña hasta dormirla. 
+
+4/5
+

@@ -1,0 +1,10 @@
+# Nos dijeron que el punto entrega para pagar el rescate sería dentro de tres días y nos indicaron dónde sería. Nosotros analizamos la zona y decidimos tenderles una trampa a sí mismo. En los tres días 
+
+Nos dijeron que el punto entrega para pagar el rescate sería dentro de tres días y nos indicaron dónde sería. Nosotros analizamos la zona y decidimos tenderles una trampa a sí mismo. En los tres días nos preparamos se analizando la zona y creando dos maniquís que simularan dos aldeanos. Luego yo, a sugerencia de Relojero decidí disfrazarme como aldeano luego el mismo día estuvimos esperándolos pacientemente a que llegaran los secuestradores. 
+
+Ellos al llegar empezaron a pedirnos el dinero cosa que si bien teníamos preparada no pensábamos entregar yo interpretando el papel de aldeano y con mis dos compañeros escondidos sigilosamente estamos esperando una chance para atacar. Pedí que nos mostraran a los rehenes para confirmar si verdaderamente no solo me iban a robar el dinero e irse. Luego de volver ya con uno de los rehenes, una niña, procedí a Simplemente no darles el dinero. Cosa que enojó bastante a los secuestradores y empezaron a amenazar de una manera más brusca. Debido a mi temperamento reaccioné mal y simplemente comencé la batalla. 
+
+Matamos a todos los secuestradores que vinieron y rescatamos a la niña. La cual tenía miedo pero luego de preguntarle le pedimos que nos indicara dónde estaban los demás rehenes. Al decir calmar a la niña hablamos con ella y soltamos el nombre de su padre, Ludwig, el cual nos dijeron los anteriores Aldeanos. Le comentamos que su padre había muerto aunque no dijimos exactamente quién lo mató y le entregamos el estoque de su padre. Pidiéndole que se escondiera. 
+
+Nos adentramos aún más al bosque explorando de a poco, dimos con su guarida donde yo fui directamente mientras me compañeros estaban tomando una posición más sigilosa intenté atacar a uno de los guardias que custodiaban la puerta de la guarida pero fallé alertándolos. A lo cual procedieron a entrar tomar dos Rehenes y salir a atacarnos.
+

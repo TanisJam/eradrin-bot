@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { load } from 'cheerio';
-import { Character, CharacterDetails } from '../types/Character';
+import { Character } from '../types/Character';
 import { CharacterSheet } from '../models/character-sheet';
-import { Nivel20character } from '../models/nivel20response';
 
 const BASE_URL = 'https://nivel20.com';
 const CAMPAIGN_URL = `${BASE_URL}/games/dnd-5/campaigns/76536-el-reposo-del-cuervo/characters`;

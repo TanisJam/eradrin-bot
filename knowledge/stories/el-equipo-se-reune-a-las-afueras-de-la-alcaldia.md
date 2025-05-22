@@ -1,0 +1,5 @@
+# El equipo se reune a las afueras de la alcaldia y hablan con el recepcionista que les dice que para hablar con el alcalde necesitan un permiso. Della recuerda que se olvidaron el permiso en la casa y 
+
+El equipo se reune a las afueras de la alcaldia y hablan con el recepcionista que les dice que para hablar con el alcalde necesitan un permiso. Della recuerda que se olvidaron el permiso en la casa y va corriendo a toda velocidad para ir a agarrarlo para luego volver con el mismo.
+Olivia y Elderane se cansan y van a la puerta sur para salir de la ciudad, pero no tienen autorización, por lo que discuten con los guardias. Yurak encuentra en el hospedaje la carta del gremio, con lo que puede ingresar a la cita. Una vez con el alcalde entiende que la verdadera razón era cerrar un trato diplomático-económico, intenta improvisar, pero visto que no tenía idea sobre que quería recibir, ni tenía para ofrecer, se retira. El grupo puede volver a Silverymoon y cuando llegan a la taberna, el esqueleto pregunta dónde está Frida, que fue con el grupo a Sundabar, pero Olivia, Yuraq, Della y Elderane no la recuerdan, como si nunca la hubieran conocido.
+

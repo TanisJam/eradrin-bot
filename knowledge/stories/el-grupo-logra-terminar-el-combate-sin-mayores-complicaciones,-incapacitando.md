@@ -1,0 +1,7 @@
+# El grupo logra terminar el combate sin mayores complicaciones, incapacitando a los guardias y al propio Mardand. Kaisar le devuelve el colgante a Felevel, quien busca descubrir que es a la vez que lo 
+
+El grupo logra terminar el combate sin mayores complicaciones, incapacitando a los guardias y al propio Mardand. Kaisar le devuelve el colgante a Felevel, quien busca descubrir que es a la vez que lo destruye. Se escuchan unas voces salir de él, las cuales dicen que tomarán posesión inevitablemente del Abuelo Árbol. El colgante es finalmente destruido, y el Fortín parece estar a salvo nuevamente. 
+    Felevel aclara, sin embargo,que al parecer un poder mayor con oscuras intenciones se encuentra detrás de todo lo sucedido. Al margen de esto, Adri An intenta acercarse a ella y atraer su atención, con escasos resultados.
+El grupo descansa una noche en las barracas, y antes de partir, Krauser visita nuevamente al enano herrero con la intención de que su “Trozo de Hierro” reciba algún tipo de filo, para convertirse en un arma efectiva. El enano accede, y afila el hierro. 
+Finalmente, los aventureros parten del Fortín de Olostin, y logran llegar a Silvery Moon tras un agotador pero al menos tranquilo viaje. Eradrin los recibe con una comida caliente; Krauser y Gilbert discuten por la posesión de la lanza que recuperaron del viejo, y hacen una apuesta lanzando una moneda. Krauser gana, y se queda con ella. Y así, por fin pueden descansar, orgullosos de haber cumplido otro encargo del gremio.
+

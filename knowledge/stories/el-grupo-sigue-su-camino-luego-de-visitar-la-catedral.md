@@ -1,0 +1,6 @@
+# El grupo sigue su camino luego de visitar la catedral de Mystra, dirigiéndose a la catedral de Selune. Cuando llegan, la luz de luna que iluminaba el lugar era acompañada por una música de órgano. El 
+
+El grupo sigue su camino luego de visitar la catedral de Mystra, dirigiéndose a la catedral de Selune. Cuando llegan, la luz de luna que iluminaba el lugar era acompañada por una música de órgano. El grupo sube al primer piso de la catedral y se encuentran con una enana que estaba tocando el órgano. Se presenta como Wendygar, una barda que fue tocada por el favor de Selune y que toca música para ella. Fennel le dice a Wendygar que el grupo quiere dejar de ser conos y Wendygar se ofrece para tocar una música para llamar a Selune. El grupo baja a la planta baja mientras Wendygar comienza a tocar, llamando a un avatar de Selune que, al conocer el motivo del grupo, los lleva a un plano diferente para probar su valía en combate.
+
+Comienzan a combatir contra mefites de lodo, una saga y ciencipies, saliendo victoriosos con golpes y hechizos certeros. Luego de terminar la pelea, cada personaje tuvo un flashback importante de su pasado que todos podían ver. Son devueltos al plano material y recompensados con la gracia de Selune. Della, Krauser, Fennel y Zai ahora sienten una conexión más fuerte luego de este viaje.
+

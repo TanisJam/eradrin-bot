@@ -1,0 +1,10 @@
+# En la mesa, le comentan a Emilia por qué vinieron y si vio o tiene algo que ver con las vacas desaparecidas. Ella dice que no pero que le serviría la ayuda del grupo en su granja: hay que plantar maíz
+
+En la mesa, le comentan a Emilia por qué vinieron y si vio o tiene algo que ver con las vacas desaparecidas. Ella dice que no pero que le serviría la ayuda del grupo en su granja: hay que plantar maíz en sus tierras, darles de comer a las gallinas y ver como está el toro que se encontraba raro... Todo esto le llama la atención al grupo, sobretodo lo del toro, pero deciden seguir su juego para ver que sucede. Mila bebe y come bastante, encuentra todo muy rico. Velamor la sigue bebiendo un poco del té, esperando no sentir nada, pero siente un calor extraño y confortante. Emilia, respondiendo algunas preguntas, comenta que sus padres se llamaban Ricardo y María, que la granja se "trabajaba sola" y que se habían ido seguramente a trabajar hace 5 años, no recordaba mucho de aquel entonces (hace 5 años fue el incendio)...
+
+Velamor, Karm y Jonathan van a plantar las semillas. Cuando terminan, Emilia vuelve y les dice que el maíz necesita ser divertido para alentarlo a crecer y se va. Velamor hace malabares con sus hachas de mano mientras Karm tararea al ritmo y Jonathan se une haciendo acrobacias, así el trigo crece totalmente pero también de un color etéreo. Jonathan prueba un maíz y le parece muy rico, por lo que se manotea 4 más en el regreso a la casa.
+
+Zai, Mila y Elowen van al granero a alimentar las gallinas. Notan que el incendio en ambos edificios (la casa y el granero) comenzó desde arriba y deducen que fueron ambos intencionales porque la distancia entre el granero y la casa es bastante así que no se podría haber propagado. En un principio Elowen quiere quemar todo para acabar de una vez con todo esto, pero es detenido por sus compañeras. Las gallinas casi todas son etéreas al igual que el alimento que les provicionó Emilia, pero hay dos que son corpóreas. Zai y Mila entretienen y alimentan a las etéreas mientras que Elowen logra alimentar con un pan duro de la mochila de Mila a las normales.
+
+3/4
+

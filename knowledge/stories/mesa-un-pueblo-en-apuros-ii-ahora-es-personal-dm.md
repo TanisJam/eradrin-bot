@@ -1,0 +1,12 @@
+# Mesa: Un Pueblo en Apuros II: Ahora es personal 
+DM: <@342836337893834753> 
+Aventureros: <@396498435747872778> (Thaye), <@258674062241431552> (Astroso), <@846811083725340722> (Reinhardt), <@3566897396
+
+Mesa: Un Pueblo en Apuros II: Ahora es personal 
+DM: <@342836337893834753> 
+Aventureros: <@396498435747872778> (Thaye), <@258674062241431552> (Astroso), <@846811083725340722> (Reinhardt), <@356689739631558656> (Amnion)
+
+
+Estaba todo muy tranquilo en el gremio cuando entro abruptamente por la puerta quien parecía ser el enano Juan, un enano que pertenecía a un pueblo que Reinhardt y yo habíamos ayudado con anterioridad, para pedir ayuda a Eradin y en el proceso pedirnos ayuda a nosotros dado que la bruja que los había atacado anteriormente había vuelto; esta vez parecía que su propósito era hacer pagar a todo el pueblo, trayendo mano de obra pesada para lograr su cometido. Al escuchar esto, reunimos un grupo muy diverso, el cual estaba constituido por Reinhardt, El agonizante borracho Astroso, la recién llegada Thaye y yo, nos pusimos brevemente al tanto de la situación pero nos dirigimos hacia el pueblo con premura.
+Una vez allí, nos encontramos con el siniestro panorama del pueblo siendo consumido por llamas mientras que esa suerte de golems construídos por las Nighthags seguían incendiando las chozas; sin embargo nosotros tomamos la inteligente decisión de evitar el fragor de la batalla y dirigirnos directamente hacia donde suponíamos que iban a estar. Una vez llegamos al circulo con la piedra al cual nos enfrentamos a la Nighthag la ultima vez, tuve la brillante idea de usar detectar magia para ver si había algun tipo de trampa o control mental sobre Juan (ya que la última vez había manipulado mágicamente al pueblo y el hecho de que SOLO Juan y no Juan y su mujer estuvieran aquí me parecía extraño) y me encontré que la persona que nos había ido a buscar era nada mas y nada menos que una bruja, junto a mis compañeros la atacamos varias veces hasta que ella soltó un grito de alarma que llamó la atención de los constructos de carne los cuales vinieron a atacarnos; en el fragor de la batalla ella aprovecho para escurrirse por una cueva que parecía haber sido abierta allí (y la cual supongo siempre estuvo allí, solo que mi amigo rompe piedras mágicas destruyó lo que nos habría permitido verla anteriormente) pero nosotros la seguímos en tanto nos deshicimos de los molestos constructos de acero y carne.
+

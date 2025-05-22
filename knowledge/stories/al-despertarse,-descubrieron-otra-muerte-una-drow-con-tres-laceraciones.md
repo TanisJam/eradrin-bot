@@ -1,0 +1,8 @@
+# Al despertarse, descubrieron otra muerte: una drow con tres laceraciones en la espalda, hechas por garras de alguna bestia. En la casa de la drow, encontraron planos de un candado grande para la parro
+
+Al despertarse, descubrieron otra muerte: una drow con tres laceraciones en la espalda, hechas por garras de alguna bestia. En la casa de la drow, encontraron planos de un candado grande para la parroquia. Frida se sintió mal y regresó a la taberna, mientras los tres aventureros restantes fueron a la parroquia para obtener información sobre el candado. Les explicaron que era para protegerse de una posible invasión de gnolls. Al no avanzar en la investigación, volvieron a la casa del herrero, donde lograron ver huellas que se transformaban de humanas a las de un lobo gigante.
+
+Los aventureros comenzaron a tener una idea de lo que enfrentaban, así que decidieron montar una guardia nocturna en el pueblo. Más tarde, el elfo que los había contratado informó que Osvaldo había muerto, y su cuerpo estaba en un granero a 20 minutos de allí. Corrieron hacia allí, pero el granero se incendió al entrar. Pudieron escapar, y al salir, vieron a una criatura que intentaron perseguir sin éxito, pero estaban tan lejos que tuvieron que montar campamento en el bosque. 
+
+Al día siguiente, siguieron las huellas de la criatura, que los llevaron de vuelta a Graymoor, confirmando que el asesino podría ser alguien del pueblo. En la plaza del pueblo, una lechuza les entregó una carta de una bruja que quería ayudarles. Con su ayuda, obtuvieron información sobre las debilidades de los hombres lobo y una espada mágica. También pudieron preparar una flecha con la punta de plata que habían encontrado.
+

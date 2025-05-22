@@ -1,0 +1,10 @@
+# - En el primer piso Mila se encuentra con 4 puertas cerradas. Al abrir una escucha el grito de una joven decir "Sal cochina!" y un jabón etéreo cae cerca de ella en un intento por atacarla. Mila cierr
+
+- En el primer piso Mila se encuentra con 4 puertas cerradas. Al abrir una escucha el grito de una joven decir "Sal cochina!" y un jabón etéreo cae cerca de ella en un intento por atacarla. Mila cierra la puerta rápidamente y llama a alguien. Velamor sube y toca la puerta al grito de "PERMISO!" La voz de una chica se escucha del otro lado pero luego no se escuchan más ruidos y Velamor abre la puerta encontrando un baño totalmente roto y vacío, con la ventana abierta.
+
+- En la planta baja, Elowen va a la sala de estar a prender la chimenea porque tenía mucho frío y Karm va a ayudarlo, mientras Zai y Jonathan investigan el comedor. Jonathan escucha una voz femenina entusiasmada "Visitas, visitas sii!" y se empieza a asustar. En la cocina se escucha una pava hirviendo, Elowen y Karm se dirigen hacia allí y ven que la pava hierve pero no hay ningún fuego dándole calor... Al intentar tocar la pava y moverla empieza a salir humo y Elowen abre la ventanita de la cocina. El humo sale ferozmente por la ventana y la ventana se cierra fuerte, Elowen sin poder abrirla de nuevo, llama a los demás.
+
+Zai se pregunta qué hacemos yendo separados? Deberíamos estar todos juntos y llama a todos a reunirse en la cocina con Elowen. Velamor y Mila estaban por descender las escaleras cuando ven la puerta adyacente al baño abrirse y el espectro de una chica flotar y presentarse amablemente "Hola visita! Mi nombre es Emilia! Pasen a tomar el té" y a flotar directamente hacia la cocina, con un chasquido hacer que la pava deje de hervir y con otro chasquido llenar la mesa del comedor con tazas con té y panes y manteca, todos estos etéreos verdosos, como la niña. "Tomen asiento!" exclama la chica. Todos la miran dubitativos pero uno a uno se sientan en la mesa, menos Elowen que permanece parado.
+
+2/4
+
