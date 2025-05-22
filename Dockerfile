@@ -31,6 +31,8 @@ RUN apk add --no-cache python3 make g++ gcc musl-dev \
 COPY --from=builder /app/package*.json /app/pnpm-lock.yaml ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+# Copy database file
+COPY --from=builder /app/database.sqlite ./database.sqlite
 
 # Command to run the application
 CMD ["node", "dist/index.js"]
