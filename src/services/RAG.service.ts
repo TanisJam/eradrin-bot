@@ -13,38 +13,78 @@ export class RAGService extends BaseService {
   }
 
   /**
-   * Simple search method that returns relevant chunks based on keyword search
-   * This is a basic implementation without vector embeddings
+   * Search method that returns relevant chunks based on semantic similarity
+   * Also returns additional chunks from the same file sources
    */
-  async searchRelevantChunks(query: string, limit = 3): Promise<KnowledgeChunk[]> {
+  async searchRelevantChunks(query: string, limit = 3, additionalChunksLimit = 5): Promise<KnowledgeChunk[]> {
     try {
       // Generate embedding for the query
       const queryEmbedding = await this.generateEmbedding(query);
       const queryEmbeddingString = JSON.stringify(queryEmbedding);
 
       // Fallback to keyword search if embedding fails
+      let relevantChunks: KnowledgeChunk[] = [];
       if (!queryEmbedding.length) {
-        return this.searchByKeywords(query, limit);
+        relevantChunks = await this.searchByKeywords(query, limit);
+      } else {
+        // Get all chunks to compare
+        const allChunks = await KnowledgeChunk.findAll();
+        
+        // Calculate similarity and sort by most similar
+        const chunksWithSimilarity = allChunks.map(chunk => {
+          const chunkEmbedding = JSON.parse(chunk.embedding);
+          const similarity = this.calculateCosineSimilarity(queryEmbedding, chunkEmbedding);
+          return { chunk, similarity };
+        });
+        
+        // Sort by similarity (highest first) and take the top N results
+        relevantChunks = chunksWithSimilarity
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, limit)
+          .map(item => item.chunk);
       }
 
-      // Get all chunks to compare - in a production system with many chunks,
-      // you would implement a vector database or specialized solution
-      const allChunks = await KnowledgeChunk.findAll();
+      // Extract file sources from the relevant chunks
+      const fileSources = new Set<string>();
+      for (const chunk of relevantChunks) {
+        try {
+          const metadata = JSON.parse(chunk.metadata);
+          if (metadata.source) {
+            fileSources.add(metadata.source);
+          }
+        } catch (error) {
+          this.logError('Error parsing chunk metadata', error);
+        }
+      }
+
+      // If we found file sources, get a limited number of additional chunks from those sources
+      if (fileSources.size > 0) {
+        const fileSourcesArray = Array.from(fileSources);
+        const whereConditions = fileSourcesArray.map(source => ({
+          metadata: {
+            [Op.like]: `%"source":"${source}"%`
+          }
+        }));
+
+        // Create a Set of already found chunk IDs to avoid duplicates
+        const uniqueChunkIds = new Set(relevantChunks.map(chunk => chunk.id));
+
+        // Get limited additional chunks
+        const relatedChunks = await KnowledgeChunk.findAll({
+          where: {
+            [Op.or]: whereConditions,
+            id: {
+              [Op.notIn]: Array.from(uniqueChunkIds)
+            }
+          },
+          limit: additionalChunksLimit
+        });
+
+        // Add the additional chunks
+        relevantChunks.push(...relatedChunks);
+      }
       
-      // Calculate similarity and sort by most similar
-      const chunksWithSimilarity = allChunks.map(chunk => {
-        const chunkEmbedding = JSON.parse(chunk.embedding);
-        const similarity = this.calculateCosineSimilarity(queryEmbedding, chunkEmbedding);
-        return { chunk, similarity };
-      });
-      
-      // Sort by similarity (highest first) and take the top N results
-      const sortedChunks = chunksWithSimilarity
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, limit)
-        .map(item => item.chunk);
-      
-      return sortedChunks;
+      return relevantChunks;
     } catch (error) {
       this.logError('Error searching with embeddings, falling back to keywords', error);
       return this.searchByKeywords(query, limit);

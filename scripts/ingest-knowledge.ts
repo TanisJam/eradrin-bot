@@ -20,9 +20,9 @@ args.forEach(arg => {
 // Define usage info
 const showUsage = () => {
   console.log(`
-  Usage: ts-node ingest-knowledge.ts [--mode=all|directory|file] [--file=filename.txt] [--chunkSize=500]
+  Usage: pnpm ingest-knowledge [-- options]
   
-  Parameters:
+  Options:
     --mode       Mode of operation: 'all' processes entire knowledge directory, 
                 'directory' processes a specific directory, 'file' processes a specific file.
                 Default: all
@@ -32,13 +32,16 @@ const showUsage = () => {
   
   Examples:
     # Process entire knowledge directory structure:
-    ts-node ingest-knowledge.ts --mode=all
-    
+    pnpm ingest-knowledge
+
     # Process all files in a specific directory:
-    ts-node ingest-knowledge.ts --mode=directory --directory=player-characters
+    pnpm ingest-knowledge -- --mode=directory --directory=player-characters
     
     # Process a single file:
-    ts-node ingest-knowledge.ts --mode=file --file=player-characters/elowen.txt
+    pnpm ingest-knowledge -- --mode=file --file=player-characters/elowen.txt
+    
+    # Process all files with custom chunk size:
+    pnpm ingest-knowledge -- --chunkSize=800
   `);
   process.exit(1);
 };
