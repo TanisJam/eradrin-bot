@@ -1,0 +1,9 @@
+# “Hay un campamento bandido detrás de esa montaña” Había dicho el Anciano. En la montaña había una mansión gigantesca, que, dicho sea de paso, el Anciano mencionó que no entraran ahí. Rodear la mansión
+
+“Hay un campamento bandido detrás de esa montaña” Había dicho el Anciano. En la montaña había una mansión gigantesca, que, dicho sea de paso, el Anciano mencionó que no entraran ahí. Rodear la mansión o la montaña llevaría horas, hasta podrían pasar otra noche en el bosque. Mientras Riardon, Ragnik y Tamiel debatían sobre lo que deberían hacer, Ismael sin mediar palabra, entra a la Mansión, indicando que deberían dejar de perder el tiempo. Lo sigue Ragnik, Riardon y por último un dubitativo Tamiel.
+Caen en una trampa, como era de esperarse. Nadie tenía nada más que su armadura, habían perdido sus cosas. 
+Ismael se despierta en una habitación sin nada más que dos camas, Ragnik en una suerte de jardín con y Riardon en un pasillo con dos entradas.
+Ismael encuentra una daga, que empieza a usar como artilugio mágico. Comienza a abrir puertas y a internarse en la mansión buscando respuestas y al resto de sus compañeros. Luego conjura detectar magia y, desde el norte de la mansión, se siente una fuerte presencia nigromante.
+El paladín por su parte, intenta abrir una suerte de reja que daba al norte, a una especie de pasillo. Sin éxito, comienza a escuchar ¿Pisadas? No se sabía, por lo que lentamente se aleja y comienza a buscar algo con lo que defenderse en caso de ser necesario. Termina encontrando un apiario y, sorpresivamente, descubre su amor por la apicultura.
+Tamiel fue el único que no fue “teletransportado” a ningún lado, pero se encontraba en una gran habitación vacía repleta de puertas, pero que, en el medio de ella, había un trono. Decide sentarse, pero parecía que estaba embrujado, por lo que enloquece, empezando a creerse el Rey de la Mansión, el Rey de la Colina y el Rey del Mundo. 2/4
+

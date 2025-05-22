@@ -1,0 +1,6 @@
+# Trató a Chispas como un objeto, sin darle oportunidad de que tome sus decisiones, nos amenazó a nosotros y al gremio y nos insultó. Lo que me enfureció fue cuando pinchó a Chispas con un alfiler y le 
+
+Trató a Chispas como un objeto, sin darle oportunidad de que tome sus decisiones, nos amenazó a nosotros y al gremio y nos insultó. Lo que me enfureció fue cuando pinchó a Chispas con un alfiler y le quitó su sangre, eso no lo puedo perdonar, más habiendo tenido un encuentro con el Hombre Hermoso hace apenas dos días. Esto enfureció a Chispas, que trató de recuperar su sangre y no pudo, yo traté de ayudarlo y Cita se hizo un corte en la mano, me cortó a mí y unió las sangres en una especie de pacto horrible y totalmente contra mi voluntad. Luego se apuñaló en el hombro y yo sentí el mismo dolor que ella. Y lo peor es que escucha mis pensamientos y yo los de ella. Esa zorra me explicó que para anular este pacto debía cumplir un encargo: eliminar una bestia que anidó en uno de los almacenes de su grupo allí en los barrios bajos. Al volver al gremio, Fig me prometió averiguar más información de esa bestia. 
+
+La verdad que por un lado estoy contenta de que Chispas haya decidido volver al gremio, aunque lo veo triste y un poco decepcionado y eso me preocupa. Y este pacto horrible que me hicieron… espero poder revertirlo pronto.
+

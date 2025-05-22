@@ -1,0 +1,10 @@
+# Mesa: El tesoro del dragon dormido.
+DM: <@415853813971550208> 
+Aventureros: <@1062441716075991060>  <@338893113647169538>  <@289904933702991873>  <@943572230368006146>
+ Entramos el grupo de desconocid
+
+Mesa: El tesoro del dragon dormido.
+DM: <@415853813971550208> 
+Aventureros: <@1062441716075991060>  <@338893113647169538>  <@289904933702991873>  <@943572230368006146>
+ Entramos el grupo de desconocidos a un edificio de grimo " el reposo del cuervo", nos dicen que no tienen misiones, pero de repente entra por la puerta un paladín en nombre de la gobernante  feradrel  a buscar un grupo de aventureros. Los 4 desconocidos  nos dirigimos a orostin y en el mismo nos recibió feradrel para encomendarnos una recuperar un objeto mágico perdido, Fuimos a la cueva donde se cree que estaba el objeto mágico, ingresamos y encontramos un grupo de 4 goblins que superamos con dificultades, persuadimos a un goblin para que nos indicara el camino lo seguimos asta encontrar a un anciano, el cual  nos hizo 3 preguntas cada una más difícil que el anterior alguno sufrieron duros castigos como vozonix que fue pegado al techo de la cueva con magia y el último en pasar fue zamihaza el cual sufrió la pregunta más difícil, cuál era la ley de la termodinámica, el cual increíblemente respondió correctamente y pudimos pasar, luego nos cruzamos con un grupo de 3 bandidos que aplastamos sin sufrir daño alguno asta encontrar un cofre con una piedra que emanaba poder mágico. Mientras el grupo estaba distraído con la piedra escucho pasos y de la única entrada apareció hobgoblin reclamando la piedra como suya, pero repentinamente se vio envuelto en llamas y convertido en cenizas, un gran dragón estaba a nuestra espalda el cual se autoproclamaba como muyuu el protector de la piedra, el cual nos indicó que nos entregaría la piedra para devolvérsela a fararel su dueña original. muyuu nos llevó a la entrada de orostin y el grupo de 4 aventureros llevamos la piedra a feradrel. Luego de entregada la piedra y recibida la recompensa, nos dirigimos al gremio  y  VENDIMOS NUESTRAS ALMAS, digo, firmamos el contrato de aventureros.
+

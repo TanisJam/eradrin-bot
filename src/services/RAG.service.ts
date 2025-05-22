@@ -15,16 +15,77 @@ export class RAGService extends BaseService {
   /**
    * Search method that returns relevant chunks based on semantic similarity
    * Also returns additional chunks from the same file sources
+   * @param query The search query
+   * @param limit Maximum number of chunks to return based on similarity
+   * @param additionalChunksLimit Maximum number of additional chunks from same sources
+   * @param similarityThreshold Minimum similarity score (0-1) to include a chunk (default: 0.7)
+   * @param minResultsBeforeFallback Minimum number of results before falling back to relaxed mode
    */
-  async searchRelevantChunks(query: string, limit = 3, additionalChunksLimit = 5): Promise<KnowledgeChunk[]> {
+  async searchRelevantChunks(
+    query: string, 
+    limit = 8, 
+    additionalChunksLimit = 0, 
+    similarityThreshold = 0.7,
+    minResultsBeforeFallback = 2
+  ): Promise<KnowledgeChunk[]> {
     try {
+      // First try with strict mode
+      const strictResults = await this.searchWithMode(
+        query, 
+        limit, 
+        additionalChunksLimit, 
+        similarityThreshold, 
+        'strict'
+      );
+      
+      // If we have enough results, return them
+      if (strictResults.length >= minResultsBeforeFallback) {
+        console.log(`Found ${strictResults.length} chunks in strict mode, returning results`);
+        return strictResults;
+      }
+      
+      // Otherwise, fall back to relaxed mode
+      console.log(`Found only ${strictResults.length} chunks in strict mode, falling back to relaxed mode`);
+      return this.searchWithMode(
+        query, 
+        limit, 
+        additionalChunksLimit, 
+        similarityThreshold, 
+        'relaxed'
+      );
+    } catch (error) {
+      this.logError('Error in searchRelevantChunks', error);
+      return this.searchByKeywords(query, limit);
+    }
+  }
+  
+  /**
+   * Internal method that performs the search with a specific mode
+   * @private
+   */
+  private async searchWithMode(
+    query: string, 
+    limit: number, 
+    additionalChunksLimit: number, 
+    similarityThreshold: number,
+    mode: 'strict' | 'relaxed'
+  ): Promise<KnowledgeChunk[]> {
+    try {
+      // Adjust parameters based on mode
+      if (mode === 'relaxed') {
+        // In relaxed mode, use a lower threshold and potentially more results
+        similarityThreshold = Math.min(similarityThreshold, 0.5);
+        limit = Math.max(limit, 12);
+      }
+      
       // Generate embedding for the query
       const queryEmbedding = await this.generateEmbedding(query);
-      const queryEmbeddingString = JSON.stringify(queryEmbedding);
 
-      // Fallback to keyword search if embedding fails
+      // Get chunks based on similarity or keywords
       let relevantChunks: KnowledgeChunk[] = [];
+      
       if (!queryEmbedding.length) {
+        // Fallback to keyword search if embedding fails
         relevantChunks = await this.searchByKeywords(query, limit);
       } else {
         // Get all chunks to compare
@@ -37,15 +98,86 @@ export class RAGService extends BaseService {
           return { chunk, similarity };
         });
         
-        // Sort by similarity (highest first) and take the top N results
-        relevantChunks = chunksWithSimilarity
-          .sort((a, b) => b.similarity - a.similarity)
-          .slice(0, limit)
-          .map(item => item.chunk);
+        // Sort by similarity (highest first)
+        const sortedChunks = chunksWithSimilarity
+          .sort((a, b) => b.similarity - a.similarity);
+        
+        // Get unique chunks above threshold or up to limit
+        const seenIds = new Set<number>();
+        relevantChunks = [];
+        
+        // If we're in relaxed mode, also prepare for potential keyword-based results
+        let keywordResults: KnowledgeChunk[] = [];
+        if (mode === 'relaxed') {
+          keywordResults = await this.searchByKeywords(query, Math.floor(limit / 2));
+          
+          // Add keyword-based results to seen IDs to avoid duplicates
+          for (const chunk of keywordResults) {
+            seenIds.add(chunk.id);
+          }
+        }
+        
+        // Add chunks based on similarity
+        for (const item of sortedChunks) {
+          // In strict mode, or in relaxed mode with good similarity
+          if (item.similarity >= similarityThreshold) {
+            if (!seenIds.has(item.chunk.id)) {
+              seenIds.add(item.chunk.id);
+              relevantChunks.push(item.chunk);
+              
+              // Stop when we have enough chunks
+              if (relevantChunks.length >= limit) break;
+            }
+          } else {
+            // If we already have at least one chunk, we can break
+            if (relevantChunks.length > 0) {
+              this.logDebug(`Stopping at similarity ${item.similarity} (below threshold ${similarityThreshold})`);
+              break;
+            }
+            
+            // If we have no chunks yet, include this one even if below threshold
+            if (mode === 'strict' && !seenIds.has(item.chunk.id)) {
+              seenIds.add(item.chunk.id);
+              relevantChunks.push(item.chunk);
+              this.logDebug(`Including chunk with similarity ${item.similarity} (below threshold) because no better matches found`);
+              break;
+            }
+          }
+        }
+        
+        // In relaxed mode, merge similarity-based and keyword-based results
+        if (mode === 'relaxed' && keywordResults.length > 0) {
+          // Add keyword results if we don't have enough chunks
+          if (relevantChunks.length < limit) {
+            relevantChunks.push(...keywordResults);
+            this.logDebug(`Added ${keywordResults.length} keyword-based results in relaxed mode`);
+          }
+        }
+        
+        this.logDebug(`Found ${relevantChunks.length} chunks with mode=${mode}, threshold=${similarityThreshold}`);
       }
 
       // Extract file sources from the relevant chunks
       const fileSources = new Set<string>();
+      let primarySource: string | null = null;
+      
+      // Try to get the source of the first (most relevant) chunk
+      if (relevantChunks.length > 0) {
+        try {
+          const firstChunkMetadata = JSON.parse(relevantChunks[0].metadata);
+          if (firstChunkMetadata.source) {
+            primarySource = firstChunkMetadata.source;
+            // Only add to fileSources if not null
+            if (primarySource) {
+              fileSources.add(primarySource);
+            }
+          }
+        } catch (error) {
+          this.logError('Error parsing first chunk metadata', error);
+        }
+      }
+      
+      // Then get sources from other chunks
       for (const chunk of relevantChunks) {
         try {
           const metadata = JSON.parse(chunk.metadata);
@@ -57,36 +189,88 @@ export class RAGService extends BaseService {
         }
       }
 
-      // If we found file sources, get a limited number of additional chunks from those sources
-      if (fileSources.size > 0) {
-        const fileSourcesArray = Array.from(fileSources);
-        const whereConditions = fileSourcesArray.map(source => ({
-          metadata: {
-            [Op.like]: `%"source":"${source}"%`
-          }
-        }));
-
-        // Create a Set of already found chunk IDs to avoid duplicates
-        const uniqueChunkIds = new Set(relevantChunks.map(chunk => chunk.id));
-
-        // Get limited additional chunks
-        const relatedChunks = await KnowledgeChunk.findAll({
-          where: {
-            [Op.or]: whereConditions,
-            id: {
-              [Op.notIn]: Array.from(uniqueChunkIds)
-            }
-          },
-          limit: additionalChunksLimit
-        });
-
-        // Add the additional chunks
-        relevantChunks.push(...relatedChunks);
-      }
+      // Keep track of unique chunk IDs
+      const uniqueChunkIds = new Set(relevantChunks.map(chunk => chunk.id));
       
-      return relevantChunks;
+      // Find additional chunks from the same sources, prioritizing the primary source
+      if (fileSources.size > 0 && additionalChunksLimit > 0) {
+        const additionalChunks: KnowledgeChunk[] = [];
+        
+        // First prioritize the primary source (from the first result)
+        if (primarySource) {
+          const primarySourceChunks = await KnowledgeChunk.findAll({
+            where: {
+              metadata: {
+                [Op.like]: `%"source":"${primarySource}"%`
+              },
+              id: {
+                [Op.notIn]: Array.from(uniqueChunkIds)
+              }
+            },
+            limit: additionalChunksLimit
+          });
+          
+          // Add these chunks to our results
+          for (const chunk of primarySourceChunks) {
+            if (!uniqueChunkIds.has(chunk.id)) {
+              uniqueChunkIds.add(chunk.id);
+              additionalChunks.push(chunk);
+            }
+          }
+        }
+        
+        // If we still need more chunks, try other sources
+        if (additionalChunks.length < additionalChunksLimit) {
+          const remainingLimit = additionalChunksLimit - additionalChunks.length;
+          const otherSources = Array.from(fileSources)
+            .filter(source => source !== primarySource);
+            
+          if (otherSources.length > 0) {
+            const whereConditions = otherSources.map(source => ({
+              metadata: {
+                [Op.like]: `%"source":"${source}"%`
+              }
+            }));
+    
+            const otherSourceChunks = await KnowledgeChunk.findAll({
+              where: {
+                [Op.or]: whereConditions,
+                id: {
+                  [Op.notIn]: Array.from(uniqueChunkIds)
+                }
+              },
+              limit: remainingLimit
+            });
+    
+            // Add the additional chunks
+            for (const chunk of otherSourceChunks) {
+              if (!uniqueChunkIds.has(chunk.id)) {
+                uniqueChunkIds.add(chunk.id);
+                additionalChunks.push(chunk);
+              }
+            }
+          }
+        }
+        
+        // Add all additional chunks to our results
+        relevantChunks.push(...additionalChunks);
+      }
+
+      // Double-check for duplicates before returning
+      const finalSeenIds = new Set<number>();
+      const finalChunks: KnowledgeChunk[] = [];
+      
+      for (const chunk of relevantChunks) {
+        if (!finalSeenIds.has(chunk.id)) {
+          finalSeenIds.add(chunk.id);
+          finalChunks.push(chunk);
+        }
+      }
+
+      console.log(`Found ${finalChunks.length} unique chunks (mode: ${mode})`);
+      return finalChunks;
     } catch (error) {
-      this.logError('Error searching with embeddings, falling back to keywords', error);
+      this.logError('Error in searchWithMode', error);
       return this.searchByKeywords(query, limit);
     }
   }

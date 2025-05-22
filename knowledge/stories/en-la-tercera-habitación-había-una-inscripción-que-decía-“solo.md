@@ -1,0 +1,6 @@
+# En la tercera habitación había una inscripción que decía “Solo aquellos que confían en el proceso pueden atravesar la niebla”. La habitación en sí era enorme, con una escalera en espiral que descendía
+
+En la tercera habitación había una inscripción que decía “Solo aquellos que confían en el proceso pueden atravesar la niebla”. La habitación en sí era enorme, con una escalera en espiral que descendía y estaba cubierta de niebla, no se podía ver el final. Decidimos primero comenzar a bajar, primero Dorgan valientemente comenzó el descenso, luego seguimos el resto. A medida que bajábamos, una sensación de calidez comenzó a invadirme, pero Dominus parecía estar pasando un mal momento, hasta que decidió guardar sus esqueletos y continuamos bajando, pero al momento que la niebla nos cubrió, y seguimos avanzando, el camino nos devolvió al inicio. Tras fallar al descender, decidimos confiar y saltar. Nos tomamos de las manos y saltamos al mismo tiempo.
+
+Luego de caer por un largo tiempo, sentimos magia fuerte y aterrizamos. Luego de una experiencia inesperada, fuimos teletransportados afuera de la biblioteca. Le contamos lo sucedido al señorito, que fue muy amable con el pago y en regalarnos libros de su biblioteca personal.
+

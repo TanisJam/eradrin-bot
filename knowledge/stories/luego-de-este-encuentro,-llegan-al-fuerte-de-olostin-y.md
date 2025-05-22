@@ -1,0 +1,5 @@
+# Luego de este encuentro, llegan al Fuerte de Olostin y se encuentran con Felevel la Verde. Ésta les cuenta brevemente la situación con los trolls. Los aventureros preguntan por el comandante en jefe d
+
+Luego de este encuentro, llegan al Fuerte de Olostin y se encuentran con Felevel la Verde. Ésta les cuenta brevemente la situación con los trolls. Los aventureros preguntan por el comandante en jefe del Fortín, y Felevel les informa que se trata de Mardand. ella les recomienda no mencionar su nombre a los guardias o en la taberna, a la vez que los incita a buscar información.
+Entonces salen del lugar de Felevel, y el grupo se divide. Fontaine y Elderane van a la taberna, mientras que Adri An, Gilbert, Kaisar y Krauser van a la herreria que dirige un enano senil y sordo, pero muy habil para la forja. En ella, Kaisar recibe una nueva cuerda para su arco (la anterior se rompió en el encuentro con los bandidos) y el enano promete a Krauser una gran espada, pero termina dándole un gran trozo de hierro a cambio de su lanza, lanza que el enano usa como nuevo muñeco de entrenamiento ya que el anterior fue destrozado. Sin embargo, Gilbert recupera la lanza.
+

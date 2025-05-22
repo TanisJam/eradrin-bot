@@ -1,0 +1,4 @@
+# Para aflojar tensiones, los aventureros proponen celebrar la paz con una fiesta: Mavolio y Chispas nuevamente hacen un espectáculo de baile y equilibrio hasta que Mavolio toma 5galones de ron y cae de
+
+Para aflojar tensiones, los aventureros proponen celebrar la paz con una fiesta: Mavolio y Chispas nuevamente hacen un espectáculo de baile y equilibrio hasta que Mavolio toma 5galones de ron y cae desmayado. Fennel prueba un poco de líquido, y al no estar acostumbrado a tomar, no le cae muy bien y se pone a hacer bailes alrededor del fuego junto con algunos kobolds. Chispas revisa todo el campamento en busca de cosas brillantes. Zai habla con Vuli quien agradece la intervención de los aventureros para traer la paz y unirla con su amado goblin. Paga a los aventureros 120GP, que Zai recibe y luego divide entre todos. Al día siguiente vuelven a la taberna, con Mavolio con la reseca más fuerte que haya tenido en su vida.
+

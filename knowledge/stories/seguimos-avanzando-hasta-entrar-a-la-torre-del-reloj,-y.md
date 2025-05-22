@@ -1,0 +1,10 @@
+# Seguimos avanzando hasta entrar a la torre del reloj, y nos vimos trasportados nuevamente a un campo enorme, lleno de charcos verdes con magia de cronomancia, y al fondo, más elevado, había un campo d
+
+Seguimos avanzando hasta entrar a la torre del reloj, y nos vimos trasportados nuevamente a un campo enorme, lleno de charcos verdes con magia de cronomancia, y al fondo, más elevado, había un campo de flores donde había un niño bastante extraño que tenía una varita en una mano y un reloj en otra, y detrás de él una enorme guadaña con un reloj con 13 horas y varias manecillas. El niño exige que le demos nuestros años de vida, y al negarnos comienza la batalla: aparecen muchos espectros con guadañas, y el niño era un mago muy muy poderoso. La pelea fue muy dura, estuvimos a punto de morir en muchas ocasiones. 
+
+Fue la pelea más dura en la que haya participado. Nada parecía afectarlo, y podía contrarrestar nuestros ataques con facilidad… incluso robarnos años de vida. De lo más bajo fue que se metió en mi mente, y trajo espectros con el aspecto de Maragun y Krauser a luchar contra mí. En un momento muy complicado, donde varios estaban caídos, y otros muy heridos, hizo algo con el reloj guadaña y me atacó con una de las manecillas del reloj. Luego de eso no recuerdo nada más. 
+Me desperté en la cabaña, con Fide a mi lado, con todos los relojes rotos y todo dañado. Estaba sola, y muy lastimada. Buscando a mis compañeros encontré una pluma negra, pedazos rotos de Marcos, el reloj del niño y la guadaña, un mechón de pelo color rojizo… La pluma comenzó a brillar y una voz me dijo que puedo utilizarla para traer a una de sus seguidoras de vuelta a la vida por haber ayudado a detener el gran mal que se estaba gestando en el Shadowfell. Me vi envuelta en una luz verdosa, y aparecí nuevamente en el gremio, junto con Fidu. 
+
+Volví sola, sin ninguno de mis compañeros, sin mis amigos. Nuevamente pierdo a quienes quiero, y no pude hacer nada para ayudarlos. 
+Lo siento. Silvanus, ilumina sus almas por favor.
+

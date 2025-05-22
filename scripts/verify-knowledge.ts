@@ -1,6 +1,7 @@
 import { initDatabase } from '../src/database/config';
 import KnowledgeChunk from '../src/database/models/KnowledgeChunk';
 import { Op } from 'sequelize';
+import ragService from '../src/services/RAG.service';
 
 // Process command line arguments
 const args = process.argv.slice(2);
@@ -19,6 +20,8 @@ args.forEach(arg => {
 const source = params.source || '';
 const query = params.query || '';
 const limit = parseInt(params.limit || '10', 10);
+const mode = params.mode || 'strict';
+const relaxedMode = mode === 'relaxed';
 
 /**
  * Display summary statistics about the knowledge base
@@ -66,62 +69,63 @@ async function showStats(): Promise<void> {
 }
 
 /**
- * Search for chunks matching a query
+ * Search for chunks matching a query using RAG service
  */
 async function searchChunks(query: string, sourceFilter?: string, limit = 5): Promise<void> {
   try {
-    const whereConditions: any[] = [];
+    let chunks: KnowledgeChunk[] = [];
     
-    // Add content search condition
     if (query) {
-      whereConditions.push({
-        content: {
-          [Op.like]: `%${query}%`
-        }
-      });
-    }
-    
-    // Add source filter if provided
-    if (sourceFilter) {
-      const chunks = await KnowledgeChunk.findAll({
-        attributes: ['id', 'metadata'],
-        raw: true
-      });
+      // Use RAG service to search with semantic similarity
+      console.log(`Searching with RAG service (${relaxedMode ? 'relaxed' : 'auto'} mode)...`);
       
-      const matchingIds = chunks
-        .filter(chunk => {
+      // If source filter is provided, we'll filter results after search
+      chunks = await ragService.searchRelevantChunks(
+        query,
+        limit * 2, // Request more results to account for filtering
+        0,         // No additional chunks
+        0.7,       // Default threshold
+        relaxedMode ? 1 : 2  // In relaxed mode, fallback more readily
+      );
+      
+      // Apply source filter if provided
+      if (sourceFilter) {
+        chunks = chunks.filter(chunk => {
           try {
             const metadata = JSON.parse(chunk.metadata);
             return metadata.source && metadata.source.toLowerCase() === sourceFilter.toLowerCase();
           } catch (e) {
             return false;
           }
-        })
-        .map(chunk => chunk.id);
-      
-      if (matchingIds.length > 0) {
-        whereConditions.push({
-          id: {
-            [Op.in]: matchingIds
-          }
         });
-      } else {
+        
+        if (chunks.length === 0) {
+          console.log(`No chunks found with source: ${sourceFilter}`);
+          return;
+        }
+      }
+      
+      // Limit results
+      chunks = chunks.slice(0, limit);
+    } else if (sourceFilter) {
+      // If only source is provided, show chunks from that source using traditional search
+      const matchingChunks = await KnowledgeChunk.findAll({
+        where: {
+          metadata: {
+            [Op.like]: `%"source":"${sourceFilter}"%`
+          }
+        },
+        limit,
+        order: [['id', 'ASC']]
+      });
+      
+      chunks = matchingChunks;
+      
+      if (chunks.length === 0) {
         console.log(`No chunks found with source: ${sourceFilter}`);
         return;
       }
     }
-    
-    // Build the final where clause
-    const whereClause = whereConditions.length > 0
-      ? { [Op.and]: whereConditions }
-      : {};
-    
-    // Execute the search
-    const chunks = await KnowledgeChunk.findAll({
-      where: whereClause,
-      limit,
-      order: [['id', 'ASC']]
-    });
     
     if (chunks.length === 0) {
       console.log('No matching chunks found');
@@ -187,6 +191,7 @@ Options:
   --query=<text>     Search for chunks containing this text
   --source=<name>    Filter by source category
   --limit=<number>   Maximum number of results to show (default: 10)
+  --mode=<strict|relaxed>  Search mode (default: strict)
 
 Examples:
   # Show general statistics
@@ -200,6 +205,9 @@ Examples:
 
   # Search for "Elowen" in player-characters source
   pnpm verify-knowledge -- --query=Elowen --source=player-characters
+  
+  # Search with relaxed mode
+  pnpm verify-knowledge -- --query=Elowen --mode=relaxed
 `);
 }
 

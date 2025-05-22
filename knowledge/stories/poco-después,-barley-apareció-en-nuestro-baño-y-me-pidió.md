@@ -1,0 +1,8 @@
+# Poco después, Barley apareció en nuestro baño y me pidió que le contara qué era lo que estábamos haciendo allí. Le conté de todas las cosas que habían pasado desde que salimos de Silverymoon, y ella n
+
+Poco después, Barley apareció en nuestro baño y me pidió que le contara qué era lo que estábamos haciendo allí. Le conté de todas las cosas que habían pasado desde que salimos de Silverymoon, y ella nos contó que, al parecer, había otros clientes hospedándose en la taberna que habían sido atacados por una Drider. Qué casualidad, no sabía que era tan común encontrarse con una Drider por esta zona, alguien debería hacer algo al respecto.
+
+Luego de unas horas, volvimos a la taberna donde Valdor conoció a un enano que adoraba a Gond como él. Le pidió que rescatáramos a su líder (Yumrek Trollhelm) y, al poco tiempo, aparecieron los amigos del enano y se pusieron a beber. Decidí quedarme tomando unos tragos con ellos; Karris no era muy buena conmigo, pero era mi compañera y la noticia de su muerte me había caído mal. Al parecer, tomamos un poco más de lo que deberíamos y desperté al otro día desnudo en medio del mercado. Sabiendo que a la gente de la ciudad le molesta mucho ese tipo de cosas, me convertí en gato para volver a la taberna. Ethilk estaba limpiando enojada; al parecer la noche anterior me convertí en mono y arrojé mis excrementos por toda la taberna. Me escabullí hacia la habitación de Valdor y me quedé esperando a que mis compañeros despertaran.
+
+Della y Zai aparecieron poco después y me dijeron que Karris no estaba muerta y que había que sacarla de la prisión. Tras recibir la buena noticia (debo haber entendido mal a Valdor), comenzamos a prepararnos para ir a rescatar a Karris y Yumrek...
+

@@ -1,0 +1,10 @@
+# - Parte 2
+Después de controlar que nadie estaba herido, siguieron su camino, llegada la noche encontraron una casa, con animales afuera que actuaban extraño, llamaron a la casa, nadie contestó, alguno
+
+- Parte 2
+Después de controlar que nadie estaba herido, siguieron su camino, llegada la noche encontraron una casa, con animales afuera que actuaban extraño, llamaron a la casa, nadie contestó, algunos se acercaron a los animales para calmarlos, dándoles comida, notando que estaban algo extraños, poco a poco se adentraron en la casa, está a oscuras pero en medio había un círculo mágico, con velas y caldero con un líquido verde.
+
+Los aventureros investigaron la casa, mientras otros simplemente miraban atentos, encontrando destrozos, viales, cajas y también una niña durmiendo, esto activo la paranoia en uno de los aventureros que dijo "vamos a matarla" pero fue detenido, porque era una sola niña, una discusión rápida sucedió, uno gritando "La niña es la bruja, los goblins hablaron de una niña, los animales que actúan raro, es la bruja!"
+Mientras uno sacaba a la niña hacia afuera, una voz retumbó en la casa que no era ni de la niña ni de los aventureros, venía del caldero, una bola de cristal se alzó sobre el caldero la bruja decía que la niña era de ella, que había trabajo arduamente para conseguir un cuerpo nuevo y que nadie se la iba llevar. El combate empezó, uno de los aventureros se dio cuenta que una mano fantasmagórica agarraba a la niña pero lo que tenía agarrado era el alma, cada vez que alejaban a la niña está sufría, tenían que apurarse en romper la bola de cristal ante de la niña fuera arrastrada hacia ella.
+El círculo protegía a la bola de cristal que tenía el alma de la bruja, poco a poco los aventureros infringieron daño sobre ella, los animales entraron al rescate de la bruja, quedando bastante dañada la bola de cristal y la niña lejos de su alcance toma posesión de uno de los animales un alcé, este se alza en 2 patas mientras los aventureros miraban la perturbadora escena de como se desgarraba el cuero del alce para alcanzar una forma casi humanoide.
+

@@ -1,0 +1,9 @@
+# Aventura: Una abuela y su nieto corren peligro
+DM: <@396498435747872778> 
+aventureros: <@1182017073598189720>, <@307226955198103582>, <@415853813971550208>, <@541452860387360769> y <@18656373729617510
+
+Aventura: Una abuela y su nieto corren peligro
+DM: <@396498435747872778> 
+aventureros: <@1182017073598189720>, <@307226955198103582>, <@415853813971550208>, <@541452860387360769> y <@186563737296175105> 
+El equipo se encuentra en la taberna y observan un papel de "nuevo trabajo", en el que hay que ayudar a una abuelita a recolectar unos elemento para crear una pócima para sanar a su nieto, diciéndonos donde están esto elementos ( una piedra, una raíz de un arbol anciano y un huevo de rana-araña). Entonces nuestro grupo va en busca de esos elementos uno de ellos es una piedra que esta en el centro de un lago congelado en la superficie, Ashenheart gracias a su mano de mago consiguió pescar la piedra. Ahora nuestro equipo se dirige al bosque en busca de la raíz en el camino se encuentran un santuario en el que hay un ciervo gigante herido entonces Dyrwen y Fennel usan su magia para curar al ciervo, gracias a ello el ciervo nos deja montarnos en el, ya que el sabe donde esta la raíz de árbol anciano, llevándonos a un portal. Una vez nuestros aventureros cruzaron el portal llegaron a un campamento donde solo había una druida(Daegal), que la saludamos y le preguntamos respecto a la raíz de árbol anciano, contándonos que tendremos que cruzar un laberinto, entonces Zai llama a su búho para que nos guíe en el laberinto, llegando al final del laberinto hay una especie de estructura donde en el centro esta el árbol anciano rodeado de agua de poca profundidad, entonces el equipo decide que Fennel debe cortar la raíz del árbol. Regresando con Daegal nos felicita y le preguntamos donde podemos conseguir huevos de rana-araña, diciéndonos que tenemos que ir a la parte oscura y con telaraña del bosque (esto tras cruzar el portal de vuelta).
+

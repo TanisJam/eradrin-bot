@@ -1,0 +1,8 @@
+# A lo largo de nuestro avance nos encontramos que la casa estaba plagada de muros falsos y estatuas.  Encontramos el cadáver de SirDunkin detrás de una de las puertas secretas que estaba averiada. Indi
+
+A lo largo de nuestro avance nos encontramos que la casa estaba plagada de muros falsos y estatuas.  Encontramos el cadáver de SirDunkin detrás de una de las puertas secretas que estaba averiada. Indicando que habia muerto porque esta se había atascado y no pudo salir. En otra puerta secreta habitaba un Gnomo con un gato de mascota, el gnomo llevaba 4 años viviendo alli y nos dio el testamento del señor que usaba como relleno para un cojin.
+
+Tenemos además pruebas que indican que la casa puede estar **EMBRUJADA**. Un fantasma de una mujer (pelo negro y ropa blanca) se le apareció a Alfur y podemos suponer que fue la que mato al bandido que dejamos atado para interrogar sobre el paradero de los niños.  El gnomo nos hablo de ella y es posible que los bandidos secuestraran gente en el sótano para ella, incluyendo a los dos niños ( Asppa y Mikkel). Examinamos el sótano que tenia un candado para el cual solo los 2 bandidos fuertes tenían la llave, pero era una enorme sala vacía y oscura en la que no vimos nada. Sin embargo cuando regresamos al sótano para revisar antes de irnos la puerta estaba cerrada con magia y el candado no se abría ni a golpes. Determinamos que era un hechizo de cierre mágico y no podíamos hacer nada.
+
+Hemos purgado a los bandidos y recuperado el testamento. Pero no hemos podido encontrar a los niños ni a ninguno de los secuestrados en la casa. Temo que la aparición los retenga en el sótano.
+

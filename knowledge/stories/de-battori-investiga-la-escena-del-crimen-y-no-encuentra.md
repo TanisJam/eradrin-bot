@@ -1,0 +1,5 @@
+# De Battori investiga la escena del crimen y no encuentra mucho pero habla con testimonios y encuentra rastros de harina. Drako habla con Acrobat el cual está lleno de paranoia y habla de que “ellos” l
+
+De Battori investiga la escena del crimen y no encuentra mucho pero habla con testimonios y encuentra rastros de harina. Drako habla con Acrobat el cual está lleno de paranoia y habla de que “ellos” lo van a encontrar y se rehúsa a hablar con Drako para revelar información crucial para su búsqueda. Thalos y Riardon llegan a Repartos Kreo y hablan con gente en la recepción que los dirigen a la parte interior del establecimiento y siguen a un empleado el cual les revela que el pedido que tienen es para “Panaderia Hearthstone”. Una empleada los mira mal y causan que pierda su trabajo.
+Fueron a la Panadería y antes de entrar vieron 2 cosas. La casa del vecino tenía unas paredes de madera como si fueran puestas rápidamente y se pueden romper fácil, hay unas escaleras que creen que va a un subsuelo
+
