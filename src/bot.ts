@@ -28,7 +28,17 @@ Object.keys(commands).forEach((commandName) => {
 // Event when bot is ready
 client.once(Events.ClientReady, async () => {
   try {
-    await initDatabase();
+    // Comprobar si es un inicio seguro (sin alterar tablas)
+    const safeStart = process.env.SAFE_START === 'true';
+    
+    if (safeStart) {
+      logger.info('Running in safe mode. Database alter operations are disabled.');
+      await initDatabase(false, false);
+    } else {
+      // Modo normal, permite alterar si es necesario
+      await initDatabase();
+    }
+    
     logger.info(`${client.user?.username} is online!`);
   } catch (error) {
     logger.error('Error initializing database:', error);
