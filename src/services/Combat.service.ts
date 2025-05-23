@@ -1,11 +1,12 @@
 import Combat from '../database/models/Combat';
-import Character from '../database/models/Character';
-import { CharacterService } from './Character.service';
+import Duelist from '../database/models/Duelist';
+import { DuelistService } from './Duelist.service';
 import { BaseService } from './BaseService';
 import { AttackResult } from '../types/Combat.type';
 import { getAiModel } from '../ai-model';
 import { Op } from 'sequelize';
 import BodyPart from '../database/models/BodyPart';
+import sequelize from '../database/config';
 
 // Constantes para umbrales críticos
 const THRESHOLDS = {
@@ -39,8 +40,8 @@ const THRESHOLDS = {
   }
 };
 
-// Nuevo tipo para representar los estados de un personaje
-export type CharacterCondition = 
+// Nuevo tipo para representar los estados de un duelista
+export type DuelistCondition = 
   | 'ok'                // Estado normal
   | 'bleeding'          // Sangrado significativo
   | 'severe_bleeding'   // Sangrado severo
@@ -58,7 +59,7 @@ export type CharacterCondition =
  * Servicio para gestionar combates por turnos
  */
 export class CombatService extends BaseService {
-  private characterService: CharacterService;
+  private duelistService: DuelistService;
   private readonly COMBAT_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos de inactividad para terminar combate
   
   private readonly systemInstruction =
@@ -80,41 +81,48 @@ export class CombatService extends BaseService {
 
   constructor() {
     super('CombatService');
-    this.characterService = new CharacterService();
+    this.duelistService = new DuelistService();
     this.aiModel = getAiModel(this.systemInstruction);
   }
 
   /**
-   * Inicia un nuevo combate entre dos personajes
+   * Inicia un nuevo combate entre dos duelistas
    */
   async startCombate(attackerId: number, defenderId: number): Promise<Combat> {
+    // Iniciar transacción para asegurar consistencia
+    const transaction = await sequelize.transaction();
+    
     try {
       this.logDebug(`Iniciando combate entre ${attackerId} y ${defenderId}`);
       
-      // Comprobar si ya existe un combate activo entre estos personajes
+      // Comprobar si ya existe un combate activo entre estos duelistas
       const existingCombat = await Combat.findOne({
         where: {
           isActive: true,
           attackerId,
           defenderId,
         },
+        transaction
       });
 
       if (existingCombat) {
         this.logInfo(`Combate ya existente: ${existingCombat.id}`);
+        await transaction.commit();
         return existingCombat;
       }
 
-      // Determinar quién empieza (basado en agilidad o alguna estadística)
-      const attacker = await Character.findByPk(attackerId);
-      const defender = await Character.findByPk(defenderId);
+      // Verificar que ambos duelistas existen
+      const attacker = await Duelist.findByPk(attackerId, { transaction });
+      const defender = await Duelist.findByPk(defenderId, { transaction });
       
       if (!attacker || !defender) {
-        throw new Error('Personaje no encontrado');
+        throw new Error(`Duelista no encontrado: ${!attacker ? 'atacante' : 'defensor'} (ID: ${!attacker ? attackerId : defenderId})`);
       }
 
-      // Iniciar con personaje más ágil o aleatorio si son iguales
-      const starterCharacterId = 
+      this.logDebug(`Duelistas verificados: ${attacker.name} (${attackerId}) vs ${defender.name} (${defenderId})`);
+
+      // Iniciar con duelista más ágil o aleatorio si son iguales
+      const starterDuelistId = 
         (attacker.stats.agility || 10) > (defender.stats.agility || 10) 
           ? attackerId 
           : defenderId;
@@ -122,24 +130,29 @@ export class CombatService extends BaseService {
       const combat = await Combat.create({
         attackerId,
         defenderId,
-        currentCharacterId: starterCharacterId,
+        currentDuelistId: starterDuelistId,
         lastActionTimestamp: new Date(),
         combatLog: [`¡Combate iniciado entre ${attacker.name} y ${defender.name}!`]
-      });
+      }, { transaction });
 
+      // Confirmar transacción
+      await transaction.commit();
+      
       this.logInfo(`Nuevo combate creado: ${combat.id}`);
       return combat;
     } catch (error) {
+      // Revertir transacción en caso de error
+      await transaction.rollback();
       return this.handleError(error, `Error al iniciar combate`);
     }
   }
 
   /**
    * Aplica efectos por sangrado al inicio del turno
-   * Retorna un objeto con la descripción y si el personaje ha muerto
+   * Retorna un objeto con la descripción y si el duelista ha muerto
    */
-  private async applyBleedingEffects(character: Character): Promise<{ description: string, isDead: boolean }> {
-    if (character.status.bleeding <= THRESHOLDS.BLEEDING.LOW) {
+  private async applyBleedingEffects(duelist: Duelist): Promise<{ description: string, isDead: boolean }> {
+    if (duelist.status.bleeding <= THRESHOLDS.BLEEDING.LOW) {
       return { description: '', isDead: false };
     }
 
@@ -148,75 +161,75 @@ export class CombatService extends BaseService {
     let isDead = false;
 
     // Calcular daño por sangrado
-    if (character.status.bleeding >= THRESHOLDS.BLEEDING.CRITICAL) {
+    if (duelist.status.bleeding >= THRESHOLDS.BLEEDING.CRITICAL) {
       bleedingDamage = 10; // Daño extremo por hemorragia crítica
-      description = `🩸 ${character.name} sufre una hemorragia masiva, perdiendo grandes cantidades de sangre.`;
+      description = `🩸 ${duelist.name} sufre una hemorragia masiva, perdiendo grandes cantidades de sangre.`;
       
       // Reducir consciencia significativamente
-      character.status.consciousness = Math.round((Math.max(0, character.status.consciousness - 15)) * 10) / 10;
+      duelist.status.consciousness = Math.round((Math.max(0, duelist.status.consciousness - 15)) * 10) / 10;
       
       // Posibilidad de muerte
-      if (character.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.CRITICAL) {
-        description += ` Con el pulso debilitándose, ${character.name} está al borde de la muerte por desangramiento.`;
+      if (duelist.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.CRITICAL) {
+        description += ` Con el pulso debilitándose, ${duelist.name} está al borde de la muerte por desangramiento.`;
         isDead = Math.random() < 0.25; // 25% de probabilidad de morir por turno con hemorragia crítica
         
         if (isDead) {
-          description += ` 💀 Finalmente, ${character.name} sucumbe a sus heridas, sin poder detener la pérdida de sangre.`;
-          character.status.consciousness = 0;
+          description += ` 💀 Finalmente, ${duelist.name} sucumbe a sus heridas, sin poder detener la pérdida de sangre.`;
+          duelist.status.consciousness = 0;
           
           // Agregar condición de muerto
-          character.conditions = [...character.conditions.filter(c => c !== 'dying'), 'dead'];
+          duelist.conditions = [...duelist.conditions.filter(c => c !== 'dying'), 'dead'];
         } else {
-          character.conditions = [...character.conditions.filter(c => 
+          duelist.conditions = [...duelist.conditions.filter(c => 
             c !== 'ok' && c !== 'bleeding' && c !== 'severe_bleeding'), 'hemorrhage', 'dying'];
         }
       }
-    } else if (character.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
+    } else if (duelist.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
       bleedingDamage = 6; // Daño severo
-      description = `🩸 ${character.name} pierde mucha sangre, debilitándose visiblemente con cada movimiento.`;
-      character.status.consciousness = Math.round((Math.max(0, character.status.consciousness - 8)) * 10) / 10;
-      character.conditions = [...character.conditions.filter(c => 
+      description = `🩸 ${duelist.name} pierde mucha sangre, debilitándose visiblemente con cada movimiento.`;
+      duelist.status.consciousness = Math.round((Math.max(0, duelist.status.consciousness - 8)) * 10) / 10;
+      duelist.conditions = [...duelist.conditions.filter(c => 
         c !== 'ok' && c !== 'bleeding'), 'severe_bleeding'];
-    } else if (character.status.bleeding >= THRESHOLDS.BLEEDING.MEDIUM) {
+    } else if (duelist.status.bleeding >= THRESHOLDS.BLEEDING.MEDIUM) {
       bleedingDamage = 3; // Daño moderado
-      description = `🩸 ${character.name} sigue sangrando, su piel palidece.`;
-      character.status.consciousness = Math.round((Math.max(0, character.status.consciousness - 4)) * 10) / 10;
-      character.conditions = [...character.conditions.filter(c => c !== 'ok'), 'bleeding'];
+      description = `🩸 ${duelist.name} sigue sangrando, su piel palidece.`;
+      duelist.status.consciousness = Math.round((Math.max(0, duelist.status.consciousness - 4)) * 10) / 10;
+      duelist.conditions = [...duelist.conditions.filter(c => c !== 'ok'), 'bleeding'];
     } else {
       bleedingDamage = 1; // Daño leve
-      description = `🩸 ${character.name} tiene un sangrado leve pero constante.`;
-      character.conditions = [...character.conditions.filter(c => c !== 'ok'), 'bleeding'];
+      description = `🩸 ${duelist.name} tiene un sangrado leve pero constante.`;
+      duelist.conditions = [...duelist.conditions.filter(c => c !== 'ok'), 'bleeding'];
     }
 
     // Aplicar daño a la salud general
-    character.health = Math.max(0, character.health - bleedingDamage);
+    duelist.health = Math.max(0, duelist.health - bleedingDamage);
     
     // Incrementar el valor de sangrado gradualmente si es alto (simula empeorar)
-    if (character.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
-      character.status.bleeding = Math.round((Math.min(100, character.status.bleeding + 3)) * 10) / 10;
+    if (duelist.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
+      duelist.status.bleeding = Math.round((Math.min(100, duelist.status.bleeding + 3)) * 10) / 10;
     }
     
-    await character.save();
+    await duelist.save();
     return { description, isDead };
   }
 
   /**
-   * Evalúa si un personaje está incapacitado o inconsciente basado en sus estados
+   * Evalúa si un duelista está incapacitado o inconsciente basado en sus estados
    */
-  private evaluateCharacterCondition(character: Character, bodyParts: BodyPart[]): string {
+  private evaluateDuelistCondition(duelist: Duelist, bodyParts: BodyPart[]): string {
     // Verificar estado de inconsciencia por niveles bajos de consciencia
-    if (character.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.CRITICAL) {
-      return `${character.name} está inconsciente y no puede actuar.`;
+    if (duelist.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.CRITICAL) {
+      return `${duelist.name} está inconsciente y no puede actuar.`;
     }
     
     // Verificar incapacitación por dolor extremo
-    if (character.status.pain >= THRESHOLDS.PAIN.CRITICAL) {
-      return `${character.name} está completamente incapacitado por el dolor extremo.`;
+    if (duelist.status.pain >= THRESHOLDS.PAIN.CRITICAL) {
+      return `${duelist.name} está completamente incapacitado por el dolor extremo.`;
     }
     
     // Verificar incapacitación por fatiga extrema
-    if (character.status.fatigue >= THRESHOLDS.FATIGUE.CRITICAL) {
-      return `${character.name} está demasiado agotado para continuar luchando.`;
+    if (duelist.status.fatigue >= THRESHOLDS.FATIGUE.CRITICAL) {
+      return `${duelist.name} está demasiado agotado para continuar luchando.`;
     }
     
     // Verificar incapacitación por daño a partes críticas
@@ -227,477 +240,390 @@ export class CombatService extends BaseService {
     );
     
     if (criticalParts.length > 0) {
-      return `${character.name} está gravemente herido en ${criticalParts.map(p => p.name).join(' y ')} y no puede continuar.`;
+      return `${duelist.name} está gravemente herido en ${criticalParts.map(p => p.name).join(' y ')} y no puede continuar.`;
     }
     
     // Comprobar movilidad - si ambas piernas están inutilizables
     const legs = bodyParts.filter(part => part.type === 'leg');
     if (legs.length >= 2 && legs.every(leg => leg.health <= THRESHOLDS.BODY_PART.UNUSABLE)) {
-      return `${character.name} no puede moverse con ambas piernas gravemente dañadas.`;
+      return `${duelist.name} no puede moverse con ambas piernas gravemente dañadas.`;
     }
     
     // Comprobar capacidad de ataque - si ambos brazos están inutilizables
     const arms = bodyParts.filter(part => part.type === 'arm');
     if (arms.length >= 2 && arms.every(arm => arm.health <= THRESHOLDS.BODY_PART.UNUSABLE)) {
-      return `${character.name} no puede atacar con ambos brazos gravemente dañados.`;
+      return `${duelist.name} no puede atacar con ambos brazos gravemente dañados.`;
     }
     
     return ''; // No hay incapacitación
   }
 
   /**
-   * Aplica modificadores al ataque basados en el estado del personaje
+   * Aplica modificadores al ataque basados en el estado del duelista
    */
-  private getAttackModifier(character: Character, bodyParts: BodyPart[]): { 
+  private getAttackModifier(duelist: Duelist, bodyParts: BodyPart[]): { 
     modifier: number, 
     description: string 
   } {
-    let modifier = 1.0; // Valor base
+    let modifier = 1.0;
     let reasons: string[] = [];
     
     // Modificador por dolor
-    if (character.status.pain >= THRESHOLDS.PAIN.HIGH) {
+    if (duelist.status.pain >= THRESHOLDS.PAIN.HIGH) {
       modifier *= 0.6; // -40% de efectividad
       reasons.push("dolor intenso");
-    } else if (character.status.pain >= THRESHOLDS.PAIN.MEDIUM) {
+    } else if (duelist.status.pain >= THRESHOLDS.PAIN.MEDIUM) {
       modifier *= 0.75; // -25% de efectividad
       reasons.push("dolor moderado");
     }
     
     // Modificador por fatiga
-    if (character.status.fatigue >= THRESHOLDS.FATIGUE.HIGH) {
+    if (duelist.status.fatigue >= THRESHOLDS.FATIGUE.HIGH) {
       modifier *= 0.7; // -30% de efectividad
       reasons.push("fatiga extrema");
-    } else if (character.status.fatigue >= THRESHOLDS.FATIGUE.MEDIUM) {
+    } else if (duelist.status.fatigue >= THRESHOLDS.FATIGUE.MEDIUM) {
       modifier *= 0.85; // -15% de efectividad
       reasons.push("fatiga moderada");
     }
     
     // Modificador por consciencia
-    if (character.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.LOW) {
+    if (duelist.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.LOW) {
       modifier *= 0.6; // -40% de efectividad
       reasons.push("aturdimiento");
-    } else if (character.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.MEDIUM) {
+    } else if (duelist.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.MEDIUM) {
       modifier *= 0.8; // -20% de efectividad
       reasons.push("mareo");
     }
     
-    // Modificador por partes del cuerpo dañadas
-    const arms = bodyParts.filter(part => part.type === 'arm');
+    // Comprobar si hay partes dañadas que afecten al ataque (brazos)
+    const damagedArms = bodyParts.filter(
+      part => part.type === 'arm' && part.health <= THRESHOLDS.BODY_PART.UNUSABLE
+    );
     
-    // Verificar brazos dañados (afectan a la capacidad de ataque)
-    const damagedArms = arms.filter(arm => arm.health <= 30);
     if (damagedArms.length > 0) {
-      if (damagedArms.length === arms.length) {
-        // Todos los brazos dañados
-        modifier *= 0.6; // -40% de efectividad
-        reasons.push("brazos gravemente heridos");
-      } else {
-        // Al menos un brazo dañado
-        modifier *= 0.8; // -20% de efectividad
-        reasons.push("brazo herido");
-      }
+      // Si tiene un brazo inutilizado, penalizar el ataque
+      modifier *= 0.7; // -30% de efectividad
+      reasons.push(`${damagedArms.length > 1 ? 'brazos dañados' : 'brazo dañado'}`);
     }
     
     let description = '';
     if (reasons.length > 0) {
-      description = `${character.name} ataca con dificultad debido a ${reasons.join(' y ')}.`;
+      description = `${duelist.name} ataca con dificultad debido a ${reasons.join(' y ')}.`;
     }
     
-    return { modifier, description };
+    return { 
+      modifier, 
+      description 
+    };
   }
-
+  
   /**
-   * Procesa un turno de ataque en el combate
+   * Procesa un turno del combate
    */
   async processTurn(
     combatId: number, 
-    characterId: number, 
+    duelistId: number, 
     actionType: 'attack' | 'defend' | 'recover',
     targetBodyPart?: string
   ) {
     try {
+      // Obtener el combate
       const combat = await Combat.findByPk(combatId);
-      if (!combat) {
-        throw new Error('Combate no encontrado');
+      
+      if (!combat || !combat.isActive) {
+        throw new Error('Combate no encontrado o finalizado');
       }
 
-      if (!combat.isActive) {
-        throw new Error('Este combate ya ha terminado');
-      }
-
-      // Verificar si es el turno del personaje
-      if (combat.currentCharacterId !== characterId) {
+      // Verificar si es el turno del duelista
+      if (combat.currentDuelistId !== duelistId) {
         throw new Error('No es tu turno para actuar');
       }
 
-      // Obtener los personajes involucrados
-      const attackerChar = await Character.findByPk(combat.attackerId);
-      const defenderChar = await Character.findByPk(combat.defenderId);
+      // Obtener los duelistas involucrados
+      const attackerChar = await Duelist.findByPk(combat.attackerId);
+      const defenderChar = await Duelist.findByPk(combat.defenderId);
       
       if (!attackerChar || !defenderChar) {
-        throw new Error('Personaje no encontrado');
+        throw new Error('Duelista no encontrado');
       }
 
-      // Log de estadísticas antes de la acción
-      this.logDebug(`========= STATS ANTES DE LA ACCIÓN (${actionType}) =========`);
-      this.logDebug(`Atacante (${attackerChar.name}):`);
-      this.logDebug(`  Health: ${attackerChar.health}`);
-      this.logDebug(`  Stats: ${JSON.stringify(attackerChar.stats)}`);
-      this.logDebug(`  Status: ${JSON.stringify(attackerChar.status)}`);
-      this.logDebug(`Defensor (${defenderChar.name}):`);
-      this.logDebug(`  Health: ${defenderChar.health}`);
-      this.logDebug(`  Stats: ${JSON.stringify(defenderChar.stats)}`);
-      this.logDebug(`  Status: ${JSON.stringify(defenderChar.status)}`);
+      // Obtener las partes del cuerpo de ambos
+      const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar.id } });
+      const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar.id } });
       
-      // Obtener partes del cuerpo
-      const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar.id } });
-      const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar.id } });
+      // Actualizar timestamp de última acción
+      combat.lastActionTimestamp = new Date();
+      await combat.save();
       
-      this.logDebug('Partes del cuerpo del atacante:');
-      attackerBodyParts.forEach(part => {
-        this.logDebug(`  ${part.name}: ${part.health}/100`);
-      });
+      // Variable para almacenar el resultado de la acción
+      let actionResult;
       
-      this.logDebug('Partes del cuerpo del defensor:');
-      defenderBodyParts.forEach(part => {
-        this.logDebug(`  ${part.name}: ${part.health}/100 ${part.name === targetBodyPart ? '(OBJETIVO)' : ''}`);
-      });
-      
-      this.logDebug('====================================================');
-
       // Aplicar efectos de sangrado al inicio del turno
-      const isAttacker = characterId === combat.attackerId;
+      const isAttacker = duelistId === combat.attackerId;
       const activeCharacter = isAttacker ? attackerChar : defenderChar;
       const otherCharacter = isAttacker ? defenderChar : attackerChar;
       const activeBodyParts = isAttacker ? attackerBodyParts : defenderBodyParts;
       
-      // Aplicar sangrado al personaje activo
+      // Aplicar sangrado al duelista activo
       const bleedingResult = await this.applyBleedingEffects(activeCharacter);
       if (bleedingResult.description) {
         combat.combatLog = [
           ...combat.combatLog, 
-          `[Ronda ${combat.roundCount}, Inicio del Turno] ${bleedingResult.description}`
+          bleedingResult.description
         ];
+        await combat.save();
       }
       
-      // Verificar si el personaje ha muerto por sangrado
+      // Verificar si el duelista ha muerto por sangrado
       if (bleedingResult.isDead) {
         combat.isActive = false;
-        const message = `¡${activeCharacter.name} ha muerto desangrado! ${otherCharacter.name} es el ganador.`;
-        combat.combatLog = [...combat.combatLog, message];
+        const winnerName = otherCharacter.name;
+        const loserName = activeCharacter.name;
+        const message = `${loserName} ha muerto desangrado. ¡${winnerName} es el vencedor!`;
+        
+        combat.combatLog = [
+          ...combat.combatLog, 
+          message
+        ];
         await combat.save();
         
-        return { combat, actionResult: { description: bleedingResult.description }, message };
+        return {
+          combat,
+          actionResult: {
+            description: bleedingResult.description
+          },
+          message
+        };
       }
       
       // Verificar incapacitación
-      const incapacitationMessage = this.evaluateCharacterCondition(activeCharacter, activeBodyParts);
+      const incapacitationMessage = this.evaluateDuelistCondition(activeCharacter, activeBodyParts);
       if (incapacitationMessage) {
-        // El personaje está incapacitado y no puede realizar su acción
+        // El duelista está incapacitado y no puede realizar su acción
         combat.combatLog = [
           ...combat.combatLog, 
-          `[Ronda ${combat.roundCount}, Turno ${combat.currentTurn}] ${incapacitationMessage}`
+          incapacitationMessage
         ];
         
-        // Si está inconsciente o incapacitado, avanzar turno sin realizar acción
-        const actionResult = { description: incapacitationMessage };
-        
-        // Verificar si esto causa el fin del combate
-        if (activeCharacter.status.consciousness <= 0 || 
-            activeCharacter.conditions.includes('dead') || 
-            activeCharacter.conditions.includes('dying')) {
-            
-          combat.isActive = false;
-          const message = `¡El combate ha terminado! ${otherCharacter.name} es el ganador.`;
-          combat.combatLog = [...combat.combatLog, message];
-          await combat.save();
-          
-          return { combat, actionResult, message };
-        }
-        
-        // Avanzar al siguiente turno sin realizar acción
+        // Pasar al siguiente turno
         this.advanceTurn(combat, isAttacker ? combat.defenderId : combat.attackerId);
-        await combat.save();
         
-        return { combat, actionResult };
+        return {
+          combat,
+          actionResult: {
+            description: incapacitationMessage
+          }
+        };
       }
-
-      let actionResult;
-
-      // Procesar la acción según el tipo
+      
+      // Procesar la acción elegida
       switch (actionType) {
         case 'attack':
           if (!targetBodyPart) {
-            throw new Error('Debes especificar una parte del cuerpo para atacar');
+            throw new Error('Debe especificar una parte del cuerpo para atacar');
           }
           
-          // Obtener modificadores de ataque basados en el estado del personaje
-          const attackModifier = this.getAttackModifier(activeCharacter, activeBodyParts);
-          let modifierDescription = '';
-          
-          if (attackModifier.description) {
-            modifierDescription = attackModifier.description;
-            // Registrar el efecto del estado en el log
+          try {
+            // Obtener modificadores de ataque basados en el estado del duelista
+            const attackModifier = this.getAttackModifier(activeCharacter, activeBodyParts);
+            let modifierDescription = '';
+            
+            if (attackModifier.description) {
+              combat.combatLog = [
+                ...combat.combatLog, 
+                attackModifier.description
+              ];
+              modifierDescription = attackModifier.description;
+              await combat.save();
+            }
+            
+            // Almacenar el modificador temporal para que el servicio de Duelist lo utilice
+            if (attackModifier.modifier !== 1.0) {
+              activeCharacter.conditions = [
+                ...activeCharacter.conditions.filter(c => !c.startsWith('attack_modifier_')),
+                `attack_modifier_${attackModifier.modifier.toFixed(2)}`
+              ];
+              await activeCharacter.save();
+            }
+            
+            // Procesar el ataque
+            actionResult = await this.duelistService.attack(
+              duelistId,
+              isAttacker ? combat.defenderId : combat.attackerId,
+              targetBodyPart
+            );
+            
+            // Si hay descripción de modificador, combinarla con el resultado
+            if (modifierDescription && actionResult.description) {
+              actionResult.description = `${modifierDescription} ${actionResult.description}`;
+            }
+            
+            // Mejorar la descripción con IA si está disponible
+            if (this.aiModel) {
+              actionResult.description = await this.enhanceDescription(actionResult.description);
+            }
+            
+            // Registrar el resultado en el log de combate
             combat.combatLog = [
               ...combat.combatLog, 
-              `[Ronda ${combat.roundCount}, Turno ${combat.currentTurn}] ${attackModifier.description}`
+              actionResult.description
+            ];
+          } catch (error) {
+            this.logError('Error procesando ataque:', error);
+            combat.combatLog = [
+              ...combat.combatLog, 
+              `Error al procesar ataque: ${(error as Error).message}`
             ];
           }
-          
-          // Almacenar el modificador temporal para que el servicio de Character lo utilice
-          if (attackModifier.modifier !== 1.0) {
-            activeCharacter.conditions = [
-              ...activeCharacter.conditions.filter(c => c !== 'attack_modifier'), 
-              `attack_modifier_${attackModifier.modifier}`
-            ];
-            await activeCharacter.save();
-          }
-          
-          // Procesar el ataque
-          actionResult = await this.characterService.attack(
-            characterId,
-            isAttacker ? combat.defenderId : combat.attackerId,
-            targetBodyPart
-          );
-
-          // Eliminar el modificador temporal después del ataque
-          activeCharacter.conditions = activeCharacter.conditions.filter(
-            c => !c.startsWith('attack_modifier')
-          );
-          await activeCharacter.save();
-
-          // Mejorar descripción con IA
-          actionResult.description = await this.enhanceDescription(
-            modifierDescription ? 
-            `${modifierDescription} ${actionResult.description}` :
-            actionResult.description
-          );
-          
-          // Añadir al log de combate
-          combat.combatLog = [
-            ...combat.combatLog, 
-            `[Ronda ${combat.roundCount}, Turno ${combat.currentTurn}] ${actionResult.description}`
-          ];
-          
           break;
           
         case 'defend':
           // Implementar defensa (reducción de daño en próximo turno)
-          // El efecto de defensa es menos efectivo si el personaje está en mal estado
+          // El efecto de defensa es menos efectivo si el duelista está en mal estado
           const defenseEffectiveness = this.getDefenseEffectiveness(activeCharacter);
           
-          // Calcular porcentaje de reducción de daño para mostrar al jugador
-          const damageReductionPercentage = Math.round(defenseEffectiveness * 100);
-          
-          // Añadir pequeños beneficios de recuperación al defender (menos que al usar 'recover')
-          // Reducir fatiga y dolor levemente
-          activeCharacter.status.fatigue = Math.round((Math.max(0, activeCharacter.status.fatigue - 5)) * 10) / 10;
-          activeCharacter.status.pain = Math.round((Math.max(0, activeCharacter.status.pain - 5)) * 10) / 10;
-          
-          // Crear descripción más informativa
-          let defenseDesc = '';
-          if (defenseEffectiveness >= 0.9) {
-            defenseDesc = `con una postura perfecta, reducirá el próximo ataque en un ${damageReductionPercentage}%`;
-          } else if (defenseEffectiveness >= 0.7) {
-            defenseDesc = `con buena postura, reducirá el próximo ataque en un ${damageReductionPercentage}%`;
-          } else if (defenseEffectiveness >= 0.5) {
-            defenseDesc = `con dificultad, reducirá el próximo ataque en un ${damageReductionPercentage}%`;
-          } else {
-            defenseDesc = `con gran dificultad, apenas logrando reducir el próximo ataque en un ${damageReductionPercentage}%`;
-          }
-          
-          actionResult = {
-            description: `${activeCharacter.name} adopta una postura defensiva ${defenseDesc}. Esto también le permite recuperar algo de aliento.`
-          };
-          
-          // Añadir algún efecto temporal de defensa
+          // Aplicar efecto de defensa como una condición temporal
           activeCharacter.conditions = [
-            ...activeCharacter.conditions.filter(c => c !== 'defending'), 
-            `defending_${defenseEffectiveness}`
+            ...activeCharacter.conditions.filter(c => !c.startsWith('defending_')),
+            `defending_${defenseEffectiveness.toFixed(2)}`
           ];
           await activeCharacter.save();
           
+          const defenseDescription = `${activeCharacter.name} se coloca en posición defensiva, preparándose para el próximo ataque${defenseEffectiveness < 1.5 ? ' con cierta dificultad' : ''}.`;
+          
+          // Registrar acción en el log
           combat.combatLog = [
             ...combat.combatLog, 
-            `[Ronda ${combat.roundCount}, Turno ${combat.currentTurn}] ${actionResult.description}`
+            defenseDescription
           ];
           
+          actionResult = {
+            description: defenseDescription
+          };
           break;
           
         case 'recover':
-          // La eficacia de la recuperación se ve afectada por estados
+          // El efecto de recuperación depende del estado actual
           const recoveryEffectiveness = this.getRecoveryEffectiveness(activeCharacter);
           
-          let recoveryDescription = '';
-          if (recoveryEffectiveness < 0.5) {
-            recoveryDescription = ` con extrema dificultad`;
-          } else if (recoveryEffectiveness < 0.8) {
-            recoveryDescription = ` con dificultad`;
-          }
-          
-          // Modificar temporalmente la efectividad de recuperación
+          // Agregar un modificador temporal para la recuperación
           activeCharacter.conditions = [
-            ...activeCharacter.conditions.filter(c => c !== 'recovering'), 
-            `recovery_mod_${recoveryEffectiveness}`
+            ...activeCharacter.conditions.filter(c => !c.startsWith('recovery_modifier_')),
+            `recovery_modifier_${recoveryEffectiveness.toFixed(2)}`
           ];
           await activeCharacter.save();
           
           // Realizar recuperación con el modificador
-          await this.characterService.recover(characterId);
+          await this.duelistService.recover(duelistId);
           
           // Eliminar el modificador temporal
-          activeCharacter.conditions = activeCharacter.conditions.filter(
-            c => !c.startsWith('recovery_mod')
-          );
+          activeCharacter.conditions = activeCharacter.conditions.filter(c => !c.startsWith('recovery_modifier_'));
           await activeCharacter.save();
           
-          actionResult = {
-            description: `${activeCharacter.name} se toma un momento para recuperar el aliento${recoveryDescription} y estabilizar sus heridas.`
-          };
+          const recoveryDescription = `${activeCharacter.name} toma un momento para recuperarse.`;
           
+          // Registrar acción en el log
           combat.combatLog = [
             ...combat.combatLog, 
-            `[Ronda ${combat.roundCount}, Turno ${combat.currentTurn}] ${actionResult.description}`
+            recoveryDescription
           ];
           
+          actionResult = {
+            description: recoveryDescription
+          };
           break;
-          
-        default:
-          throw new Error('Acción no válida');
       }
-
-      // Actualizar personajes con los últimos valores
-      const updatedAttacker = await Character.findByPk(combat.attackerId);
-      const updatedDefender = await Character.findByPk(combat.defenderId);
+      
+      // Pasar al siguiente turno
+      this.advanceTurn(combat, isAttacker ? combat.defenderId : combat.attackerId);
+      
+      // Actualizar duelistas con los últimos valores
+      const updatedAttacker = await Duelist.findByPk(combat.attackerId);
+      const updatedDefender = await Duelist.findByPk(combat.defenderId);
       
       if (!updatedAttacker || !updatedDefender) {
-        throw new Error('Error al actualizar personajes');
+        throw new Error('Error al actualizar duelistas');
       }
 
-      // Comprobar si el combate debe terminar (algún personaje inconsciente, muerto o incapacitado)
-      const updatedAttackerBodyParts = await BodyPart.findAll({ where: { characterId: updatedAttacker.id } });
-      const updatedDefenderBodyParts = await BodyPart.findAll({ where: { characterId: updatedDefender.id } });
+      // Comprobar si el combate debe terminar (algún duelista inconsciente, muerto o incapacitado)
+      const updatedAttackerBodyParts = await BodyPart.findAll({ where: { duelistId: updatedAttacker.id } });
+      const updatedDefenderBodyParts = await BodyPart.findAll({ where: { duelistId: updatedDefender.id } });
       
-      const attackerIncapacitated = this.isCharacterCriticallyDisabled(updatedAttacker, updatedAttackerBodyParts);
-      const defenderIncapacitated = this.isCharacterCriticallyDisabled(updatedDefender, updatedDefenderBodyParts);
+      const isAttackerDisabled = this.isCharacterCriticallyDisabled(updatedAttacker, updatedAttackerBodyParts);
+      const isDefenderDisabled = this.isCharacterCriticallyDisabled(updatedDefender, updatedDefenderBodyParts);
       
-      if (attackerIncapacitated || defenderIncapacitated) {
-        const winner = attackerIncapacitated ? updatedDefender.name : updatedAttacker.name;
-        const loser = attackerIncapacitated ? updatedAttacker.name : updatedDefender.name;
-        const loserChar = attackerIncapacitated ? updatedAttacker : updatedDefender;
+      if (isAttackerDisabled || isDefenderDisabled) {
+        combat.isActive = false;
+        let message = '';
         
-        // Determinar el tipo de derrota
-        let defeatReason = '';
-        
-        if (loserChar.conditions.includes('permanent_death')) {
-          defeatReason = 'ha muerto definitivamente';
-        } else if (loserChar.conditions.includes('dead')) {
-          defeatReason = 'ha muerto';
-        } else if (loserChar.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.CRITICAL) {
-          defeatReason = 'ha quedado inconsciente';
-        } else if (loserChar.conditions.includes('dying')) {
-          defeatReason = 'está al borde de la muerte';
+        if (isAttackerDisabled && isDefenderDisabled) {
+          message = `¡Ambos duelistas han caído! ¡El combate termina en empate!`;
         } else {
-          defeatReason = 'está demasiado herido para continuar';
+          const winnerName = isAttackerDisabled ? updatedDefender.name : updatedAttacker.name;
+          const loserName = isAttackerDisabled ? updatedAttacker.name : updatedDefender.name;
+          message = `${loserName} no puede continuar. ¡${winnerName} es el vencedor!`;
         }
         
-        combat.isActive = false;
-        const message = loserChar.conditions.includes('permanent_death')
-          ? `¡El combate ha terminado! ${loser} ha recibido un golpe fatal y ha muerto permanentemente. ${winner} es el ganador.`
-          : `¡El combate ha terminado! ${loser} ${defeatReason}. ${winner} es el ganador.`;
-          
         combat.combatLog = [
-          ...combat.combatLog,
+          ...combat.combatLog, 
           message
         ];
-        
         await combat.save();
         
-        // Log de estadísticas al final del combate
-        this.logDebug(`========= STATS FINAL DEL COMBATE =========`);
-        this.logDebug(`Ganador: ${winner}`);
-        this.logDebug(`Atacante (${updatedAttacker.name}):`);
-        this.logDebug(`  Health: ${updatedAttacker.health}`);
-        this.logDebug(`  Status: ${JSON.stringify(updatedAttacker.status)}`);
-        this.logDebug(`Defensor (${updatedDefender.name}):`);
-        this.logDebug(`  Health: ${updatedDefender.health}`);
-        this.logDebug(`  Status: ${JSON.stringify(updatedDefender.status)}`);
-        this.logDebug('==========================================');
-        
-        return { 
-          combat, 
-          actionResult, 
-          message 
+        return {
+          combat,
+          actionResult,
+          message
         };
       }
-
-      // Avanzar al siguiente turno
-      this.advanceTurn(combat, isAttacker ? combat.defenderId : combat.attackerId);
-      await combat.save();
-
-      // Log de estadísticas después de la acción
-      this.logDebug(`========= STATS DESPUÉS DE LA ACCIÓN (${actionType}) =========`);
       
-      this.logDebug(`Atacante (${updatedAttacker.name}):`);
-      this.logDebug(`  Health: ${updatedAttacker.health}`);
-      this.logDebug(`  Stats: ${JSON.stringify(updatedAttacker.stats)}`);
-      this.logDebug(`  Status: ${JSON.stringify(updatedAttacker.status)}`);
-      this.logDebug(`Defensor (${updatedDefender.name}):`);
-      this.logDebug(`  Health: ${updatedDefender.health}`);
-      this.logDebug(`  Stats: ${JSON.stringify(updatedDefender.stats)}`);
-      this.logDebug(`  Status: ${JSON.stringify(updatedDefender.status)}`);
-      
-      this.logDebug('Partes del cuerpo del atacante:');
-      updatedAttackerBodyParts.forEach(part => {
-        this.logDebug(`  ${part.name}: ${part.health}/100`);
-      });
-      
-      this.logDebug('Partes del cuerpo del defensor:');
-      updatedDefenderBodyParts.forEach(part => {
-        this.logDebug(`  ${part.name}: ${part.health}/100 ${part.name === targetBodyPart ? '(OBJETIVO)' : ''}`);
-      });
-      
-      this.logDebug('======================================================');
-
-      return { combat, actionResult };
+      return {
+        combat,
+        actionResult
+      };
     } catch (error) {
-      return this.handleError(error, 'Error al procesar turno de combate');
+      this.logError('Error al procesar turno:', error);
+      throw error;
     }
   }
 
   /**
-   * Verifica si un personaje está crítica e irremediablemente incapacitado
+   * Verifica si un duelista está crítica e irremediablemente incapacitado
    */
-  private isCharacterCriticallyDisabled(character: Character, bodyParts: BodyPart[]): boolean {
+  private isCharacterCriticallyDisabled(duelist: Duelist, bodyParts: BodyPart[]): boolean {
     // Verificar muerte
-    if (character.conditions.includes('dead')) {
+    if (duelist.conditions.includes('dead')) {
       return true;
     }
     
     // Verificar inconsciencia total
-    if (character.status.consciousness <= 0) {
+    if (duelist.status.consciousness <= 0) {
       return true;
     }
     
-    // Verificar daño crítico en partes vitales
+    // Comprobar daño grave en partes vitales
     const headParts = bodyParts.filter(part => part.type === 'head');
     const torsoParts = bodyParts.filter(part => part.type === 'torso');
     
     // Si la cabeza está a 0 o menos
     if (headParts.some(part => part.health <= 0)) {
-      this.applyPermanentDeath(character, 'head');
+      this.applyPermanentDeath(duelist, 'head');
       return true;
     }
     
     // Si el torso está a 0 o menos
     if (torsoParts.some(part => part.health <= 0)) {
-      this.applyPermanentDeath(character, 'torso');
+      this.applyPermanentDeath(duelist, 'torso');
       return true;
     }
     
     // Estado dying
-    if (character.conditions.includes('dying')) {
+    if (duelist.conditions.includes('dying')) {
+      return true;
+    }
+    
+    // Si está inconsciente
+    if (duelist.conditions.includes('unconscious')) {
       return true;
     }
     
@@ -705,195 +631,202 @@ export class CombatService extends BaseService {
   }
 
   /**
-   * Aplica muerte permanente a un personaje cuando una parte vital llega a 0
+   * Aplica muerte permanente a un duelista cuando una parte vital llega a 0
    */
-  private async applyPermanentDeath(character: Character, cause: 'head' | 'torso'): Promise<void> {
+  private async applyPermanentDeath(duelist: Duelist, cause: 'head' | 'torso'): Promise<void> {
     try {
-      // Marcar al personaje como permanentemente muerto
-      character.conditions = [...character.conditions.filter(c => 
+      // Marcar al duelista como permanentemente muerto
+      duelist.conditions = [...duelist.conditions.filter(c => 
         c !== 'dying' && c !== 'unconscious' && c !== 'incapacitated'), 
         'dead', 'permanent_death'];
       
       // Establecer salud y consciencia a 0
-      character.health = 0;
-      character.status.consciousness = 0;
+      duelist.health = 0;
+      duelist.status.consciousness = 0;
       
-      // Guardar el nuevo estado del personaje
-      await character.save();
+      // Guardar el nuevo estado del duelista
+      await duelist.save();
       
       // Registrar causa de muerte en el log del sistema
       const causeText = cause === 'head' ? 'destrucción de la cabeza' : 'daño fatal al torso';
-      this.logInfo(`MUERTE PERMANENTE: El personaje ${character.name} (ID: ${character.id}) ha muerto por ${causeText}.`);
+      this.logInfo(`MUERTE PERMANENTE: El duelista ${duelist.name} (ID: ${duelist.id}) ha muerto por ${causeText}.`);
     } catch (error) {
       this.logError('Error al aplicar muerte permanente:', error);
     }
   }
 
   /**
-   * Calcula la efectividad de la defensa según el estado del personaje
+   * Calcula la efectividad de la defensa según el estado del duelista
    */
-  private getDefenseEffectiveness(character: Character): number {
+  private getDefenseEffectiveness(duelist: Duelist): number {
     let effectiveness = 1.0; // Base
     
-    // Reducir por dolor
-    if (character.status.pain >= THRESHOLDS.PAIN.HIGH) {
-      effectiveness *= 0.6;
-    } else if (character.status.pain >= THRESHOLDS.PAIN.MEDIUM) {
-      effectiveness *= 0.8;
+    // Fatiga afecta negativamente a la defensa
+    if (duelist.status.fatigue >= THRESHOLDS.FATIGUE.HIGH) {
+      effectiveness *= 0.7; // 30% menos efectivo
+    } else if (duelist.status.fatigue >= THRESHOLDS.FATIGUE.MEDIUM) {
+      effectiveness *= 0.85; // 15% menos efectivo
     }
     
-    // Reducir por fatiga
-    if (character.status.fatigue >= THRESHOLDS.FATIGUE.HIGH) {
-      effectiveness *= 0.7;
-    } else if (character.status.fatigue >= THRESHOLDS.FATIGUE.MEDIUM) {
-      effectiveness *= 0.85;
+    // Dolor afecta negativamente a la defensa
+    if (duelist.status.pain >= THRESHOLDS.PAIN.HIGH) {
+      effectiveness *= 0.8; // 20% menos efectivo
+    } else if (duelist.status.pain >= THRESHOLDS.PAIN.MEDIUM) {
+      effectiveness *= 0.9; // 10% menos efectivo
     }
     
-    // Reducir por consciencia
-    if (character.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.LOW) {
-      effectiveness *= 0.6;
-    } else if (character.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.MEDIUM) {
-      effectiveness *= 0.8;
+    // Consciencia baja afecta negativamente
+    if (duelist.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.LOW) {
+      effectiveness *= 0.7; // 30% menos efectivo
+    } else if (duelist.status.consciousness <= THRESHOLDS.CONSCIOUSNESS.MEDIUM) {
+      effectiveness *= 0.85; // 15% menos efectivo
     }
     
-    return effectiveness;
+    // Bonus por agilidad (5% por cada punto por encima de 10)
+    const agilityBonus = Math.max(0, (duelist.stats.agility - 10) * 0.05);
+    effectiveness += agilityBonus;
+    
+    // Normalizamos entre 1.0 y 2.0
+    return Math.max(1.0, Math.min(2.0, effectiveness));
   }
 
   /**
-   * Calcula la efectividad de la recuperación según el estado del personaje
+   * Calcula la efectividad de la recuperación según el estado del duelista
    */
-  private getRecoveryEffectiveness(character: Character): number {
+  private getRecoveryEffectiveness(duelist: Duelist): number {
     let effectiveness = 1.0; // Base
     
-    // El sangrado limita significativamente la recuperación
-    if (character.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
-      effectiveness *= 0.4; // Sangrado severo
-    } else if (character.status.bleeding >= THRESHOLDS.BLEEDING.MEDIUM) {
-      effectiveness *= 0.7; // Sangrado moderado
+    // Recuperación afectada por stats
+    const recoveryBonus = Math.max(0, (duelist.stats.recovery - 10) * 0.05);
+    effectiveness += recoveryBonus;
+    
+    // Bonus si está descansado
+    if (duelist.status.fatigue < THRESHOLDS.FATIGUE.LOW) {
+      effectiveness += 0.2; // 20% más efectivo
     }
     
-    // El dolor limita la recuperación
-    if (character.status.pain >= THRESHOLDS.PAIN.HIGH) {
-      effectiveness *= 0.7;
-    } else if (character.status.pain >= THRESHOLDS.PAIN.MEDIUM) {
-      effectiveness *= 0.85;
+    // Malus si tiene mucho dolor
+    if (duelist.status.pain >= THRESHOLDS.PAIN.HIGH) {
+      effectiveness *= 0.8; // 20% menos efectivo
     }
     
-    return effectiveness;
+    // Malus si está sangrando mucho
+    if (duelist.status.bleeding >= THRESHOLDS.BLEEDING.HIGH) {
+      effectiveness *= 0.7; // 30% menos efectivo
+    } else if (duelist.status.bleeding >= THRESHOLDS.BLEEDING.MEDIUM) {
+      effectiveness *= 0.85; // 15% menos efectivo
+    }
+    
+    // Normalizamos entre 0.5 y 2.0
+    return Math.max(0.5, Math.min(2.0, effectiveness));
   }
 
   /**
-   * Avanza al siguiente turno y actualiza el combate
+   * Avanza el turno al siguiente duelista
    */
-  private advanceTurn(combat: Combat, nextCharacterId: number) {
-    this.logDebug(`Avanzando turno: combate ${combat.id}, siguiente personaje: ${nextCharacterId}`);
+  private advanceTurn(combat: Combat, nextDuelistId: number) {
+    combat.currentDuelistId = nextDuelistId;
     
-    // Guardar el estado anterior para logueo
-    const prevCharacterId = combat.currentCharacterId;
-    const prevTurn = combat.currentTurn;
-    const prevRound = combat.roundCount;
-    
-    // Actualizar al siguiente personaje
-    combat.currentCharacterId = nextCharacterId;
-    combat.lastActionTimestamp = new Date();
-    
-    // Determinar si debemos cambiar el número de turno
-    if (
-      (combat.currentTurn === 1 && nextCharacterId === combat.defenderId) ||
-      (combat.currentTurn === 2 && nextCharacterId === combat.attackerId)
-    ) {
-      combat.currentTurn = combat.currentTurn === 1 ? 2 : 1;
-      
-      // Si volvemos al turno 1, incrementamos la ronda
-      if (combat.currentTurn === 1) {
-        combat.roundCount += 1;
-      }
+    // Si el turno vuelve al atacante, incrementamos el contador de rondas
+    if (nextDuelistId === combat.attackerId) {
+      combat.roundCount += 1;
     }
     
-    this.logInfo(
-      `Turno avanzado: Combate #${combat.id} - ` +
-      `De: personaje ${prevCharacterId} (Turno ${prevTurn}, Ronda ${prevRound}) ` +
-      `A: personaje ${nextCharacterId} (Turno ${combat.currentTurn}, Ronda ${combat.roundCount})`
-    );
-  }
-
-  /**
-   * Mejora la descripción de combate usando IA
-   */
-  private async enhanceDescription(baseDescription: string): Promise<string> {
-    try {
-      const chatSession = this.aiModel.startChat({
-        generationConfig: this.generationConfig,
-        history: [],
-      });
-
-      const enhancedResult = await chatSession.sendMessage(baseDescription);
-      return enhancedResult.response.text();
-    } catch (error) {
-      this.logError('Error al mejorar descripción con IA', error);
-      return baseDescription; // En caso de error, devolver la descripción original
-    }
-  }
-
-  /**
-   * Abandonar un combate activo
-   */
-  async abandonCombat(combatId: number, characterId: number) {
-    try {
-      const combat = await Combat.findByPk(combatId);
-      if (!combat || !combat.isActive) {
-        throw new Error('Combate no encontrado o ya terminado');
-      }
-
-      // Verificar si el personaje está en el combate
-      if (combat.attackerId !== characterId && combat.defenderId !== characterId) {
-        throw new Error('Este personaje no está en el combate');
-      }
-
-      const surrenderingChar = await Character.findByPk(characterId);
-      const winnerCharId = characterId === combat.attackerId 
-        ? combat.defenderId 
-        : combat.attackerId;
-      const winnerChar = await Character.findByPk(winnerCharId);
-
-      if (!surrenderingChar || !winnerChar) {
-        throw new Error('Personaje no encontrado');
-      }
-
-      // Finalizar el combate
+    // Si han pasado muchos turnos, terminamos el combate automáticamente
+    if (combat.roundCount > 20) {
+      // Terminar el combate después de 20 rondas
       combat.isActive = false;
       combat.combatLog = [
         ...combat.combatLog,
-        `${surrenderingChar.name} se ha rendido. ${winnerChar.name} es el ganador.`
+        'El combate se ha alargado demasiado y termina sin un claro ganador.'
+      ];
+    }
+  }
+
+  /**
+   * Mejora las descripciones de combate utilizando IA generativa
+   */
+  private async enhanceDescription(baseDescription: string): Promise<string> {
+    try {
+      if (!this.aiModel || baseDescription.length < 10) {
+        return baseDescription;
+      }
+      
+      const response = await this.aiModel.generateContent(baseDescription);
+      const enhancedDescription = response.response.text();
+      
+      return enhancedDescription || baseDescription;
+    } catch (error) {
+      this.logError('Error al mejorar descripción con IA:', error);
+      return baseDescription;
+    }
+  }
+
+  /**
+   * Permite a un duelista abandonar un combate
+   */
+  async abandonCombat(combatId: number, duelistId: number) {
+    try {
+      const combat = await Combat.findByPk(combatId);
+      
+      if (!combat || !combat.isActive) {
+        throw new Error('Combate no encontrado o ya finalizado');
+      }
+      
+      const isAttacker = duelistId === combat.attackerId;
+      const surrenderingDuelistId = duelistId;
+      const winningDuelistId = isAttacker ? combat.defenderId : combat.attackerId;
+      
+      // Obtener los duelistas
+      const surrenderingDuelist = await Duelist.findByPk(surrenderingDuelistId);
+      const winningDuelist = await Duelist.findByPk(winningDuelistId);
+      
+      if (!surrenderingDuelist || !winningDuelist) {
+        throw new Error('Error al obtener duelistas');
+      }
+      
+      // Marcar el combate como finalizado
+      combat.isActive = false;
+      
+      // Añadir rendición al log
+      const message = `${surrenderingDuelist.name} se rinde. ¡${winningDuelist.name} es el vencedor!`;
+      combat.combatLog = [
+        ...combat.combatLog,
+        message
       ];
       
       await combat.save();
       
       return {
-        message: `${surrenderingChar.name} se ha rendido. ${winnerChar.name} es el ganador.`,
-        combat
+        success: true,
+        combat,
+        message,
+        winningDuelist,
+        surrenderingDuelist
       };
     } catch (error) {
-      return this.handleError(error, 'Error al abandonar combate');
+      return this.handleError(error, `Error al procesar rendición`);
     }
   }
 
   /**
-   * Obtiene todos los combates activos de un personaje
+   * Obtiene los combates activos de un duelista
    */
-  async getActiveCombats(characterId: number) {
+  async getActiveCombats(duelistId: number) {
     try {
-      return await Combat.findAll({
+      const combats = await Combat.findAll({
         where: {
           isActive: true,
           [Op.or]: [
-            { attackerId: characterId },
-            { defenderId: characterId }
+            { attackerId: duelistId },
+            { defenderId: duelistId }
           ]
         }
       });
+      
+      return combats;
     } catch (error) {
-      return this.handleError(error, 'Error al obtener combates activos');
+      return this.handleError(error, `Error al obtener combates activos`);
     }
   }
 } 

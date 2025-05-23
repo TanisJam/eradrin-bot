@@ -1,10 +1,10 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config';
-import Character from './Character';
+import Duelist from './Duelist';
 
 class BodyPart extends Model {
   declare id: number;
-  declare characterId: number;
+  declare duelistId: number;
   declare name: string;
   declare type: string;
   declare health: number;
@@ -35,7 +35,7 @@ BodyPart.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    characterId: {
+    duelistId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },

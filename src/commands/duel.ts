@@ -1,82 +1,82 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, ComponentType } from 'discord.js';
-import { CharacterService } from '../services/Character.service';
+import { DuelistService } from '../services/Duelist.service';
 import { CombatService } from '../services/Combat.service';
-import Character from '../database/models/Character';
+import Duelist from '../database/models/Duelist';
 import { BODY_PARTS } from '../types/Combat.type';
 import Combat from '../database/models/Combat';
 import BodyPart from '../database/models/BodyPart';
 
 // Crear instancias de los servicios
-const characterService = new CharacterService();
+const duelistService = new DuelistService();
 const combatService = new CombatService();
 
-// Helper function to check if a character can engage in combat
-const canEngageInCombat = (character: Character): { canEngage: boolean; reason: string } => {
-  if (character.conditions.includes('permanent_death')) {
+// Helper function to check if a duelist can engage in combat
+const canEngageInCombat = (duelist: Duelist): { canEngage: boolean; reason: string } => {
+  if (duelist.conditions.includes('permanent_death')) {
     return { canEngage: false, reason: 'ha muerto permanentemente' };
   }
-  if (character.conditions.includes('dead')) {
+  if (duelist.conditions.includes('dead')) {
     return { canEngage: false, reason: 'está muerto' };
   }
-  if (character.conditions.includes('dying')) {
+  if (duelist.conditions.includes('dying')) {
     return { canEngage: false, reason: 'está agonizando' };
   }
-  if (character.conditions.includes('unconscious')) {
+  if (duelist.conditions.includes('unconscious')) {
     return { canEngage: false, reason: 'está inconsciente' };
   }
-  if (character.conditions.includes('incapacitated')) {
+  if (duelist.conditions.includes('incapacitated')) {
     return { canEngage: false, reason: 'está incapacitado' };
   }
   return { canEngage: true, reason: '' };
 };
 
-// Agregar función para formatear el estado general y condiciones del personaje
-const formatCharacterStatus = (character: Character, bodyParts: BodyPart[]) => {
-  // Determinar el estado general del personaje
+// Agregar función para formatear el estado general y condiciones del duelista
+const formatDuelistStatus = (duelist: Duelist, bodyParts: BodyPart[]) => {
+  // Determinar el estado general del duelista
   let generalStateEmoji = '✅'; // Estado normal por defecto
   let stateDescription = '';
   
   // Verificar si hay condiciones especiales
-  if (character.conditions.includes('permanent_death')) {
+  if (duelist.conditions.includes('permanent_death')) {
     generalStateEmoji = '☠️';
     stateDescription = '**MUERTO PERMANENTEMENTE**';
-  } else if (character.conditions.includes('dead')) {
+  } else if (duelist.conditions.includes('dead')) {
     generalStateEmoji = '⚰️';
     stateDescription = '**MUERTO**';
-  } else if (character.conditions.includes('dying')) {
+  } else if (duelist.conditions.includes('dying')) {
     generalStateEmoji = '💀';
     stateDescription = '**MURIENDO**';
-  } else if (character.conditions.includes('unconscious')) {
+  } else if (duelist.conditions.includes('unconscious')) {
     generalStateEmoji = '😴';
     stateDescription = '**INCONSCIENTE**';
-  } else if (character.conditions.includes('incapacitated')) {
+  } else if (duelist.conditions.includes('incapacitated')) {
     generalStateEmoji = '🤕';
     stateDescription = '**INCAPACITADO**';
-  } else if (character.conditions.includes('severely_injured')) {
+  } else if (duelist.conditions.includes('severely_injured')) {
     generalStateEmoji = '🩸';
     stateDescription = '**HERIDO GRAVE**';
-  } else if (character.conditions.includes('injured')) {
+  } else if (duelist.conditions.includes('injured')) {
     generalStateEmoji = '🩹';
     stateDescription = '**HERIDO**';
-  } else if (character.conditions.includes('hemorrhage')) {
+  } else if (duelist.conditions.includes('hemorrhage')) {
     generalStateEmoji = '🩸';
     stateDescription = '**HEMORRAGIA**';
-  } else if (character.conditions.includes('severe_bleeding')) {
+  } else if (duelist.conditions.includes('severe_bleeding')) {
     generalStateEmoji = '🩸';
     stateDescription = '**SANGRADO SEVERO**';
-  } else if (character.conditions.includes('bleeding')) {
+  } else if (duelist.conditions.includes('bleeding')) {
     generalStateEmoji = '🩸';
     stateDescription = '**SANGRADO**';
   } 
   
   // Verificar estados críticos en parámetros vitales
-  if (character.status.consciousness <= 10 && !character.conditions.includes('permanent_death') && !character.conditions.includes('dead')) {
+  if (duelist.status.consciousness <= 10 && !duelist.conditions.includes('permanent_death') && !duelist.conditions.includes('dead')) {
     generalStateEmoji = '😵';
     stateDescription = stateDescription || '**ATURDIDO**';
-  } else if (character.status.pain >= 80 && !character.conditions.includes('permanent_death') && !character.conditions.includes('dead')) {
+  } else if (duelist.status.pain >= 80 && !duelist.conditions.includes('permanent_death') && !duelist.conditions.includes('dead')) {
     generalStateEmoji = '😖';
     stateDescription = stateDescription || '**DOLOR EXTREMO**';
-  } else if (character.status.fatigue >= 80 && !character.conditions.includes('permanent_death') && !character.conditions.includes('dead')) {
+  } else if (duelist.status.fatigue >= 80 && !duelist.conditions.includes('permanent_death') && !duelist.conditions.includes('dead')) {
     generalStateEmoji = '😩';
     stateDescription = stateDescription || '**AGOTADO**';
   }
@@ -100,7 +100,7 @@ const formatCharacterStatus = (character: Character, bodyParts: BodyPart[]) => {
   }
   
   // Agregar mensaje especial para muerte permanente
-  if (character.conditions.includes('permanent_death')) {
+  if (duelist.conditions.includes('permanent_death')) {
     return `${generalStateEmoji} **¡MUERTO PERMANENTEMENTE!** ${generalStateEmoji}`;
   }
   
@@ -115,20 +115,20 @@ const formatCharacterStatus = (character: Character, bodyParts: BodyPart[]) => {
   // Solo mostrar parámetros vitales si son relevantes
   let vitalInfo = [];
   
-  if (character.status.bleeding > 10) {
-    vitalInfo.push(`🩸 ${character.status.bleeding > 50 ? '**Sangrado**' : 'Sangrado'}: ${character.status.bleeding}/100`);
+  if (duelist.status.bleeding > 10) {
+    vitalInfo.push(`🩸 ${duelist.status.bleeding > 50 ? '**Sangrado**' : 'Sangrado'}: ${duelist.status.bleeding}/100`);
   }
   
-  if (character.status.consciousness < 90) {
-    vitalInfo.push(`😵 ${character.status.consciousness < 30 ? '**Conciencia**' : 'Conciencia'}: ${character.status.consciousness}/100`);
+  if (duelist.status.consciousness < 90) {
+    vitalInfo.push(`😵 ${duelist.status.consciousness < 30 ? '**Conciencia**' : 'Conciencia'}: ${duelist.status.consciousness}/100`);
   }
   
-  if (character.status.pain > 20) {
-    vitalInfo.push(`😖 ${character.status.pain > 70 ? '**Dolor**' : 'Dolor'}: ${character.status.pain}/100`);
+  if (duelist.status.pain > 20) {
+    vitalInfo.push(`😖 ${duelist.status.pain > 70 ? '**Dolor**' : 'Dolor'}: ${duelist.status.pain}/100`);
   }
   
-  if (character.status.fatigue > 30) {
-    vitalInfo.push(`😩 ${character.status.fatigue > 70 ? '**Fatiga**' : 'Fatiga'}: ${character.status.fatigue}/100`);
+  if (duelist.status.fatigue > 30) {
+    vitalInfo.push(`😩 ${duelist.status.fatigue > 70 ? '**Fatiga**' : 'Fatiga'}: ${duelist.status.fatigue}/100`);
   }
   
   // Si no hay condiciones ni estados vitales significativos, mostrar un mensaje positivo
@@ -255,26 +255,32 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     try {
       // Obtener o crear personajes
-      let attackerChar = await Character.findOne({
+      let attackerChar = await Duelist.findOne({
         where: { userId: interaction.user.id },
       });
 
       if (!attackerChar) {
-        attackerChar = await characterService.generateRandomCharacter(
+        attackerChar = await duelistService.generateRandomDuelist(
           interaction.user.id,
           interaction.user.username
         );
       }
 
-      let defenderChar = await Character.findOne({
+      let defenderChar = await Duelist.findOne({
         where: { userId: targetUser.id },
       });
 
       if (!defenderChar) {
-        defenderChar = await characterService.generateRandomCharacter(
+        defenderChar = await duelistService.generateRandomDuelist(
           targetUser.id,
           targetUser.username
         );
+      }
+
+      // Verificar que attackerChar y defenderChar no sean null antes de usar
+      if (!attackerChar || !defenderChar) {
+        await interaction.editReply('Error al obtener información de los duelistas');
+        return;
       }
 
       // Verificar si alguno de los personajes está muerto permanentemente o en un estado que le impide combatir
@@ -291,8 +297,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
 
       // Obtener las partes del cuerpo para cada personaje
-      const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-      const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+      const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+      const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
       
       const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
       const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
@@ -301,7 +307,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       const combat = await combatService.startCombate(attackerChar.id, defenderChar.id);
       
       // Determinar quién comienza
-      const firstPlayer = combat.currentCharacterId === attackerChar!.id 
+      const firstPlayer = combat.currentDuelistId === attackerChar!.id 
         ? interaction.user 
         : targetUser;
       
@@ -313,12 +319,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         .addFields(
           { 
             name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-            value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+            value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
             inline: true 
           },
           { 
             name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-            value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+            value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
             inline: true 
           },
           { name: '\u200B', value: '\u200B' },
@@ -395,7 +401,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           Object.assign(combat, updatedCombat);
           
           // Verificar si es el turno del usuario que hizo clic
-          const currentTurnUserId = combat.currentCharacterId === attackerChar!.id 
+          const currentTurnUserId = combat.currentDuelistId === attackerChar!.id 
             ? interaction.user.id 
             : targetUser.id;
             
@@ -416,12 +422,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             const result = await combatService.abandonCombat(Number(combatId), currentCharId);
             
             // Actualizar caracteres
-            attackerChar = await Character.findByPk(attackerChar!.id);
-            defenderChar = await Character.findByPk(defenderChar!.id);
+            attackerChar = await Duelist.findByPk(attackerChar!.id);
+            defenderChar = await Duelist.findByPk(defenderChar!.id);
             
             // Obtener las partes del cuerpo para cada personaje
-            const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-            const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+            const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+            const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
             
             // Actualizar mensaje con resultado final
             const finalEmbed = new EmbedBuilder()
@@ -431,12 +437,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               .addFields(
                 { 
                   name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                  value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
                   inline: true 
                 },
                 { 
                   name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                  value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
                   inline: true 
                 },
                 { name: '\u200B', value: '\u200B' },
@@ -475,12 +481,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               // Verificar si el combate ha terminado
               if (result.message) {
                 // Actualizar caracteres
-                attackerChar = await Character.findByPk(attackerChar!.id);
-                defenderChar = await Character.findByPk(defenderChar!.id);
+                attackerChar = await Duelist.findByPk(attackerChar!.id);
+                defenderChar = await Duelist.findByPk(defenderChar!.id);
                 
                 // Obtener las partes del cuerpo para la información final
-                const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-                const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+                const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+                const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
                 
                 // Crear el embed final del combate
                 const finalEmbed = new EmbedBuilder()
@@ -490,12 +496,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                   .addFields(
                     { 
                       name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                      value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                      value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
                       inline: true 
                     },
                     { 
                       name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                      value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                      value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
                       inline: true 
                     },
                     { name: '\u200B', value: '\u200B' },
@@ -513,17 +519,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               }
               
               // Si el combate no ha terminado, determinar quién tiene el próximo turno
-              const nextPlayer = result.combat.currentCharacterId === attackerChar!.id 
+              const nextPlayer = result.combat.currentDuelistId === attackerChar!.id 
                 ? interaction.user 
                 : targetUser;
               
               // Actualizar caracteres
-              attackerChar = await Character.findByPk(attackerChar!.id);
-              defenderChar = await Character.findByPk(defenderChar!.id);
+              attackerChar = await Duelist.findByPk(attackerChar!.id);
+              defenderChar = await Duelist.findByPk(defenderChar!.id);
               
               // Obtener las partes del cuerpo para cada personaje
-              const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-              const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+              const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+              const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
               
               const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
               const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
@@ -531,16 +537,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               const updatedEmbed = new EmbedBuilder()
                 .setColor(0xFF0000)
                 .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
-                .setDescription(result.actionResult.description)
+                .setDescription(result.actionResult && result.actionResult.description ? result.actionResult.description : 'Resultado del combate')
                 .addFields(
                   { 
                     name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                    value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                    value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
                     inline: true 
                   },
                   { 
                     name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                    value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                    value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
                     inline: true 
                   },
                   { name: '\u200B', value: '\u200B' },
@@ -579,12 +585,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           // Verificar si el combate ha terminado
           if (result.message) {
             // Actualizar caracteres
-            attackerChar = await Character.findByPk(attackerChar!.id);
-            defenderChar = await Character.findByPk(defenderChar!.id);
+            attackerChar = await Duelist.findByPk(attackerChar!.id);
+            defenderChar = await Duelist.findByPk(defenderChar!.id);
             
             // Obtener las partes del cuerpo para la información final
-            const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-            const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+            const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+            const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
             
             const finalEmbed = new EmbedBuilder()
               .setColor(0x00FF00)
@@ -593,12 +599,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               .addFields(
                 { 
                   name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                  value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
                   inline: true 
                 },
                 { 
                   name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                  value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
                   inline: true 
                 },
                 { name: '\u200B', value: '\u200B' },
@@ -616,20 +622,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           }
           
           // Línea 317: Agregamos un log para ver lo que está pasando
-          console.log(`ID actualCharacterId: ${result.combat.currentCharacterId}, attackerChar ID: ${attackerChar!.id}, defenderChar ID: ${defenderChar!.id}`);
+          console.log(`ID currentDuelistId: ${result.combat.currentDuelistId}, attackerChar ID: ${attackerChar!.id}, defenderChar ID: ${defenderChar!.id}`);
           
           // Verificar directamente qué personaje tiene el turno ahora
-          const nextPlayer = result.combat.currentCharacterId === attackerChar!.id 
+          const nextPlayer = result.combat.currentDuelistId === attackerChar!.id 
             ? interaction.user 
             : targetUser;
             
           // Actualizar caracteres
-          attackerChar = await Character.findByPk(attackerChar!.id);
-          defenderChar = await Character.findByPk(defenderChar!.id);
+          attackerChar = await Duelist.findByPk(attackerChar!.id);
+          defenderChar = await Duelist.findByPk(defenderChar!.id);
           
           // Obtener las partes del cuerpo para cada personaje
-          const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-          const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+          const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+          const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
           
           const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
           const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
@@ -637,16 +643,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           const updatedEmbed = new EmbedBuilder()
             .setColor(0xFF0000)
             .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
-            .setDescription(result.actionResult.description)
+            .setDescription(result.actionResult && result.actionResult.description ? result.actionResult.description : 'Resultado del combate')
             .addFields(
               { 
                 name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
                 inline: true 
               },
               { 
                 name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
                 inline: true 
               },
               { name: '\u200B', value: '\u200B' },
@@ -686,12 +692,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           }
           
           // Actualizar caracteres para tener la información más reciente
-          attackerChar = await Character.findByPk(attackerChar!.id);
-          defenderChar = await Character.findByPk(defenderChar!.id);
+          attackerChar = await Duelist.findByPk(attackerChar!.id);
+          defenderChar = await Duelist.findByPk(defenderChar!.id);
           
           // Obtener las partes del cuerpo actualizadas
-          const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-          const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+          const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+          const defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
           
           // Si el combate ya no está activo, obtener la razón real de finalización
           if (!updatedCombat.isActive) {
@@ -707,12 +713,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               .addFields(
                 { 
                   name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                  value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
                   inline: true 
                 },
                 { 
                   name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                  value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
                   inline: true 
                 },
                 { name: '\u200B', value: '\u200B' },
@@ -743,12 +749,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               .addFields(
                 { 
                   name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                  value: formatDuelistStatus(attackerChar!, attackerBodyParts), 
                   inline: true 
                 },
                 { 
                   name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                  value: formatDuelistStatus(defenderChar!, defenderBodyParts), 
                   inline: true 
                 },
                 { name: '\u200B', value: '\u200B' },
@@ -766,10 +772,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           console.error('Error al finalizar combate:', error);
           try {
             // Intentar obtener datos actualizados para el mensaje de error
-            const latestAttackerChar = await Character.findByPk(attackerChar!.id);
-            const latestDefenderChar = await Character.findByPk(defenderChar!.id);
-            const latestAttackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-            const latestDefenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+            const latestAttackerChar = await Duelist.findByPk(attackerChar!.id);
+            const latestDefenderChar = await Duelist.findByPk(defenderChar!.id);
+            const latestAttackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
+            const latestDefenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
             
             // En caso de error, mostrar mensaje genérico
             const errorEmbed = new EmbedBuilder()
@@ -779,12 +785,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               .addFields(
                 { 
                   name: `${latestAttackerChar!.name} [${latestAttackerChar!.race}]`, 
-                  value: formatCharacterStatus(latestAttackerChar!, latestAttackerBodyParts), 
+                  value: formatDuelistStatus(latestAttackerChar!, latestAttackerBodyParts), 
                   inline: true 
                 },
                 { 
                   name: `${latestDefenderChar!.name} [${latestDefenderChar!.race}]`, 
-                  value: formatCharacterStatus(latestDefenderChar!, latestDefenderBodyParts), 
+                  value: formatDuelistStatus(latestDefenderChar!, latestDefenderBodyParts), 
                   inline: true 
                 },
                 { name: '\u200B', value: '\u200B' },

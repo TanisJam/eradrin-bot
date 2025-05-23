@@ -1,64 +1,64 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { CharacterService } from '../services/Character.service';
+import { DuelistService } from '../services/Duelist.service';
 import { CombatService } from '../services/Combat.service';
-import Character from '../database/models/Character';
+import Duelist from '../database/models/Duelist';
 import { BODY_PARTS } from '../types/Combat.type';
 import BodyPart from '../database/models/BodyPart';
 import Combat from '../database/models/Combat';
 
 // Crear instancias de los servicios
-const characterService = new CharacterService();
+const duelistService = new DuelistService();
 const combatService = new CombatService();
 
-// Helper function to check if a character can engage in combat
-const canEngageInCombat = (character: Character): { canEngage: boolean; reason: string } => {
-  if (character.conditions.includes('permanent_death')) {
+// Helper function to check if a duelist can engage in combat
+const canEngageInCombat = (duelist: Duelist): { canEngage: boolean; reason: string } => {
+  if (duelist.conditions.includes('permanent_death')) {
     return { canEngage: false, reason: 'ha muerto permanentemente' };
   }
-  if (character.conditions.includes('dead')) {
+  if (duelist.conditions.includes('dead')) {
     return { canEngage: false, reason: 'está muerto' };
   }
-  if (character.conditions.includes('dying')) {
+  if (duelist.conditions.includes('dying')) {
     return { canEngage: false, reason: 'está agonizando' };
   }
-  if (character.conditions.includes('unconscious')) {
+  if (duelist.conditions.includes('unconscious')) {
     return { canEngage: false, reason: 'está inconsciente' };
   }
-  if (character.conditions.includes('incapacitated')) {
+  if (duelist.conditions.includes('incapacitated')) {
     return { canEngage: false, reason: 'está incapacitado' };
   }
   return { canEngage: true, reason: '' };
 };
 
-// Formatear el estado del personaje
-const formatCharacterStatus = (character: Character, bodyParts: BodyPart[]) => {
-  // Determinar el estado general del personaje
+// Formatear el estado del duelista
+const formatDuelistStatus = (duelist: Duelist, bodyParts: BodyPart[]) => {
+  // Determinar el estado general del duelista
   let generalStateEmoji = '✅'; // Estado normal por defecto
   let stateDescription = '';
   
   // Verificar si hay condiciones especiales
-  if (character.conditions.includes('permanent_death')) {
+  if (duelist.conditions.includes('permanent_death')) {
     generalStateEmoji = '☠️';
     stateDescription = '**MUERTO PERMANENTEMENTE**';
-  } else if (character.conditions.includes('dead')) {
+  } else if (duelist.conditions.includes('dead')) {
     generalStateEmoji = '⚰️';
     stateDescription = '**MUERTO**';
-  } else if (character.conditions.includes('dying')) {
+  } else if (duelist.conditions.includes('dying')) {
     generalStateEmoji = '💀';
     stateDescription = '**MURIENDO**';
-  } else if (character.conditions.includes('unconscious')) {
+  } else if (duelist.conditions.includes('unconscious')) {
     generalStateEmoji = '😴';
     stateDescription = '**INCONSCIENTE**';
-  } else if (character.conditions.includes('incapacitated')) {
+  } else if (duelist.conditions.includes('incapacitated')) {
     generalStateEmoji = '🤕';
     stateDescription = '**INCAPACITADO**';
-  } else if (character.conditions.includes('severely_injured')) {
+  } else if (duelist.conditions.includes('severely_injured')) {
     generalStateEmoji = '🩸';
     stateDescription = '**HERIDO GRAVE**';
-  } else if (character.conditions.includes('injured')) {
+  } else if (duelist.conditions.includes('injured')) {
     generalStateEmoji = '🩹';
     stateDescription = '**HERIDO**';
-  } else if (character.conditions.includes('hemorrhage')) {
+  } else if (duelist.conditions.includes('hemorrhage')) {
     generalStateEmoji = '🩸';
     stateDescription = '**HEMORRAGIA**';
   } 
@@ -402,12 +402,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const subcommand = interaction.options.getSubcommand();
     
     // Obtener el usuario que ejecuta el comando
-    let attackerChar = await Character.findOne({
+    let attackerChar = await Duelist.findOne({
       where: { userId: interaction.user.id },
     });
 
     if (!attackerChar) {
-      attackerChar = await characterService.generateRandomCharacter(
+      attackerChar = await duelistService.generateRandomDuelist(
         interaction.user.id,
         interaction.user.username
       );
@@ -439,12 +439,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
       
       // Obtener o crear el personaje del target
-      defenderChar = await Character.findOne({
+      defenderChar = await Duelist.findOne({
         where: { userId: targetUser.id },
       });
 
       if (!defenderChar) {
-        defenderChar = await characterService.generateRandomCharacter(
+        defenderChar = await duelistService.generateRandomDuelist(
           targetUser.id,
           targetUser.username
         );
@@ -472,12 +472,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     // Obtener las partes del cuerpo para el usuario
-    const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
+    const attackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
     
     // Obtener las partes del cuerpo para el target si es necesario
     let defenderBodyParts: BodyPart[] = [];
     if (defenderChar) {
-      defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+      defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
     }
     
     let resultado: any = {}; // Inicializar con objeto vacío para evitar undefined
@@ -495,9 +495,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         combatIdUsado = combat.id;
         
         // Verificar si es el turno del atacante, si no lo es, necesitamos ajustar el combate
-        if (combat.currentCharacterId !== attackerChar.id) {
+        if (combat.currentDuelistId !== attackerChar.id) {
           // Cambiar el turno para que sea el del atacante
-          combat.currentCharacterId = attackerChar.id;
+          combat.currentDuelistId = attackerChar.id;
           await combat.save();
         }
         
@@ -523,8 +523,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         combatIdUsado = combat.id;
         
         // Asegurarnos que es su turno
-        if (combat.currentCharacterId !== attackerChar.id) {
-          combat.currentCharacterId = attackerChar.id;
+        if (combat.currentDuelistId !== attackerChar.id) {
+          combat.currentDuelistId = attackerChar.id;
           await combat.save();
         }
         
@@ -547,8 +547,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         combatIdUsado = combat.id;
         
         // Asegurarnos que es su turno
-        if (combat.currentCharacterId !== attackerChar.id) {
-          combat.currentCharacterId = attackerChar.id;
+        if (combat.currentDuelistId !== attackerChar.id) {
+          combat.currentDuelistId = attackerChar.id;
           await combat.save();
         }
         
@@ -567,15 +567,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       case 'ayudar': {
         if (esResucitar) {
           // Si el personaje está muerto, lo "resucitamos" creando uno nuevo
-          await Character.destroy({ where: { id: defenderChar!.id } });
+          await Duelist.destroy({ where: { id: defenderChar!.id } });
           
-          defenderChar = await characterService.generateRandomCharacter(
+          defenderChar = await duelistService.generateRandomDuelist(
             targetUser!.id,
             targetUser!.username
           );
           
           // Obtener las nuevas partes del cuerpo
-          defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+          defenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
           
           descripcion = generarDescripcionAyuda(
             interaction.user.toString(),
@@ -588,8 +588,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           combatIdUsado = combat.id;
           
           // Asegurarnos que es su turno
-          if (combat.currentCharacterId !== attackerChar.id) {
-            combat.currentCharacterId = attackerChar.id;
+          if (combat.currentDuelistId !== attackerChar.id) {
+            combat.currentDuelistId = attackerChar.id;
             await combat.save();
           }
           
@@ -637,18 +637,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
     
     // Actualizar caracteres después de la acción
-    attackerChar = await Character.findByPk(attackerChar!.id);
+    attackerChar = await Duelist.findByPk(attackerChar!.id);
     
     if (defenderChar && !esResucitar) {
-      defenderChar = await Character.findByPk(defenderChar!.id);
+      defenderChar = await Duelist.findByPk(defenderChar!.id);
     }
     
     // Actualizar las partes del cuerpo después de la acción
-    const updatedAttackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
+    const updatedAttackerBodyParts = await BodyPart.findAll({ where: { duelistId: attackerChar!.id } });
     let updatedDefenderBodyParts = defenderBodyParts;
     
     if (defenderChar) {
-      updatedDefenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+      updatedDefenderBodyParts = await BodyPart.findAll({ where: { duelistId: defenderChar!.id } });
     }
     
     // Crear el embed con el resultado
@@ -662,12 +662,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       bonkEmbed.addFields(
         { 
           name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-          value: formatCharacterStatus(attackerChar!, updatedAttackerBodyParts), 
+          value: formatDuelistStatus(attackerChar!, updatedAttackerBodyParts), 
           inline: true 
         },
         { 
           name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-          value: formatCharacterStatus(defenderChar!, updatedDefenderBodyParts), 
+          value: formatDuelistStatus(defenderChar!, updatedDefenderBodyParts), 
           inline: true 
         }
       );
@@ -695,7 +695,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       bonkEmbed.addFields(
         { 
           name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-          value: formatCharacterStatus(attackerChar!, updatedAttackerBodyParts), 
+          value: formatDuelistStatus(attackerChar!, updatedAttackerBodyParts), 
           inline: false 
         },
         { 
