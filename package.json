@@ -9,10 +9,16 @@
     "dev": "concurrently \"tsc -w\" \"nodemon dist/index.js\"",
     "deploy:commands": "tsc && node dist/deploy-commands.js",
     "safe-start": "tsx scripts/safe-start.ts",
-    "safe-start:js": "tsc && node scripts/safe-start.js",
+    "safe-start:js": "tsc && node dist/scripts/safe-start.js",
     "ingest-knowledge": "pnpm exec tsx scripts/ingest-knowledge.ts",
     "verify-knowledge": "pnpm exec tsx scripts/verify-knowledge.ts",
-    "clear-knowledge": "pnpm exec tsx scripts/clear-knowledge.ts"
+    "clear-knowledge": "pnpm exec tsx scripts/clear-knowledge.ts",
+    "sync-database": "pnpm exec tsx scripts/sync-database.ts",
+    "reset-impersonation": "pnpm exec tsx scripts/reset-impersonation-table.ts",
+    "fetch-messages": "pnpm exec tsx scripts/fetch-channel-messages.ts",
+    "fetch-characters": "pnpm exec tsx scripts/fetchAllCharacters.ts",
+    "convert-to-json": "pnpm exec tsx scripts/convertToJson.ts",
+    "process-characters": "pnpm exec tsx scripts/processCharacters.ts"
   },
   "keywords": [],
   "author": "",

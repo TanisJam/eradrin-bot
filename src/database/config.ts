@@ -1,10 +1,12 @@
 import { Sequelize } from 'sequelize';
 import config from '../config';
+import databaseConfig from './database-config';
+import { logger } from '../utils/logger';
 
 // Sequelize instance for SQLite connection
 const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: config.DATABASE_PATH,
+  dialect: databaseConfig.dialect as 'sqlite',
+  storage: databaseConfig.storage,
   logging: false
 });
 
@@ -16,33 +18,33 @@ const sequelize = new Sequelize({
 export const initDatabase = async (force: boolean = false, alter: boolean = false): Promise<void> => {
   try {
     await sequelize.authenticate();
-    console.log('Database connection established successfully.');
+    logger.info('Conexión a la base de datos establecida exitosamente.');
     
     if (force) {
       // CUIDADO: force:true elimina todas las tablas y datos
-      console.warn('⚠️ FORCE MODE: All tables will be dropped and recreated!');
+      logger.warn('⚠️ MODO FORCE: ¡Todas las tablas se eliminarán y recrearán!');
       await sequelize.sync({ force: true });
-      console.log('✅ Database reset and models synchronized.');
+      logger.info('✅ Base de datos restablecida y modelos sincronizados.');
     } else if (alter) {
       // Altera las tablas existentes para añadir nuevas columnas/restricciones
       // NOTA: SQLite tiene limitaciones para alterar tablas, puede dar problemas
-      console.log('Altering tables to match models...');
+      logger.info('Alterando tablas para que coincidan con los modelos...');
       try {
         await sequelize.sync({ alter: true });
-        console.log('✅ Tables altered and models synchronized.');
+        logger.info('✅ Tablas alteradas y modelos sincronizados.');
       } catch (error) {
-        console.error('Error altering tables, falling back to normal sync:', error);
+        logger.error('Error al alterar tablas, volviendo a sincronización normal:', error);
         // Si falla alterar, intentamos con sync normal
         await sequelize.sync();
-        console.log('✅ Models synchronized without altering tables.');
+        logger.info('✅ Modelos sincronizados sin alterar tablas.');
       }
     } else {
       // En producción usamos sync normal para preservar los datos
       await sequelize.sync();
-      console.log('Models synchronized with database.');
+      logger.info('Modelos sincronizados con la base de datos.');
     }
   } catch (error) {
-    console.error('Unable to connect to database:', error);
+    logger.error('No se pudo conectar a la base de datos:', error);
     throw error; // Propagate error to be handled at a higher level
   }
 };
