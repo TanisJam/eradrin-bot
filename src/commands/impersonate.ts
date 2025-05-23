@@ -8,7 +8,8 @@ import {
   ComponentType,
   EmbedBuilder,
   StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder
+  StringSelectMenuOptionBuilder,
+  GuildMember
 } from 'discord.js';
 import { logger } from '../utils/logger';
 import ImpersonationCharacter from '../database/models/ImpersonationCharacter';
@@ -59,9 +60,7 @@ export const data = new SlashCommandBuilder()
           .setName('delete')
           .setDescription('Elimina un personaje guardado de tu colección')
       )
-  )
-  // Limitamos el comando a personas con permiso para gestionar webhooks
-  .setDefaultMemberPermissions(PermissionFlagsBits.ManageWebhooks);
+  );
 
 /**
  * Implementación del comando impersonate
@@ -73,6 +72,26 @@ export async function execute(interaction: CommandInteraction) {
       await interaction.reply({ 
         content: '❌ Este comando solo puede ser usado en un canal de texto.', 
         ephemeral: true 
+      });
+      return;
+    }
+
+    // Verificar que el usuario tiene el rol requerido
+    const allowedRoles = ['1200117154742276106', '1063664599313961011'];
+    
+    if (interaction.inGuild()) {
+      const member = interaction.member as GuildMember;
+      if (!member || !allowedRoles.some(roleId => member.roles.cache.has(roleId))) {
+        await interaction.reply({
+          content: '❌ No tienes permiso para usar este comando. Necesitas ser al menos aventurero novato.',
+          ephemeral: true
+        });
+        return;
+      }
+    } else {
+      await interaction.reply({
+        content: '❌ Este comando solo puede ser usado en un servidor.',
+        ephemeral: true
       });
       return;
     }
