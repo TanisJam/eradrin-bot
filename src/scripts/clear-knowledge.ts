@@ -1,5 +1,5 @@
-import { initDatabase } from '../src/database/config';
-import KnowledgeChunk from '../src/database/models/KnowledgeChunk';
+import { initDatabase } from '../database/config';
+import KnowledgeChunk from '../database/models/KnowledgeChunk';
 import readline from 'readline';
 
 // Process command line arguments

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { initDatabase } from '../src/database/config';
-import RAGService from '../src/services/RAG.service';
+import { initDatabase } from '../database/config';
+import RAGService from '../services/RAG.service';
 
 // Process command line arguments
 const args = process.argv.slice(2);

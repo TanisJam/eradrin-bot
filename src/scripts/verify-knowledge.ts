@@ -1,7 +1,7 @@
-import { initDatabase } from '../src/database/config';
-import KnowledgeChunk from '../src/database/models/KnowledgeChunk';
+import { initDatabase } from '../database/config';
+import KnowledgeChunk from '../database/models/KnowledgeChunk';
 import { Op } from 'sequelize';
-import ragService from '../src/services/RAG.service';
+import ragService from '../services/RAG.service';
 
 // Process command line arguments
 const args = process.argv.slice(2);
