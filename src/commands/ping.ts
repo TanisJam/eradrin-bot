@@ -3,6 +3,7 @@ import User from '../database/models/User';
 import PingHistory from '../database/models/PingHistory';
 import { Command } from '../types/Command';
 import { logger } from '../utils/logger';
+import { TransactionService } from '../services/Transaction.service';
 
 /**
  * Comando ping - Responde con Pong y registra la interacción
@@ -19,22 +20,6 @@ export async function execute(interaction: CommandInteraction) {
   try {
     logger.debug('Iniciando ejecución del comando ping');
     
-    // Buscar el último usuario que usó el comando
-    const lastPingHistory = await PingHistory.findOne({
-      order: [['createdAt', 'DESC']],
-    });
-
-    let lastPingUser = null;
-    if (lastPingHistory?.lastPingUserId) {
-      try {
-        lastPingUser = await User.findOne({
-          where: { id: lastPingHistory.lastPingUserId },
-        });
-      } catch (error) {
-        logger.error('Error al buscar el último usuario:', error);
-      }
-    }
-
     // Solo proceder si la interacción ocurre en un servidor
     if (!interaction.guild) {
       await interaction.reply('Este comando solo puede ser usado en un servidor.');
@@ -46,41 +31,51 @@ export async function execute(interaction: CommandInteraction) {
     const nickName = member.nickname || member.user.username;
     const userId = member.id;
     const currentDate = new Date();
-    // No usamos avatarUrl por ahora debido a problemas con la columna
 
-    // Registrar o actualizar el usuario en la base de datos
-    try {
+    // Usar transacción para asegurar consistencia en las operaciones de base de datos
+    const [lastPingUser] = await TransactionService.executeInTransaction(async (transaction) => {
+      // Buscar el último usuario que usó el comando dentro de la transacción
+      const lastPingHistory = await PingHistory.findOne({
+        order: [['createdAt', 'DESC']],
+        transaction
+      });
+
+      // Registrar o actualizar el usuario en la base de datos
       const [user, created] = await User.findOrCreate({
         where: { id: userId },
         defaults: {
           id: userId,
           nickName: nickName,
           lastPing: currentDate,
-          // No se incluye el campo avatar
         },
+        transaction
       });
 
-      // Si el usuario ya existía, actualizar los datos
+      // Si el usuario ya existía, actualizar los datos usando el método de instancia
       if (!created) {
-        await User.update(
-          { 
-            lastPing: currentDate,
-            nickName: nickName,
-            // No se incluye el campo avatar
-          },
-          { where: { id: userId } }
-        );
+        user.nickName = nickName;
+        user.lastPing = currentDate;
+        await user.save({ transaction });
       }
 
       // Registrar la interacción en el historial
       await PingHistory.create({
         lastPingUserId: userId,
-      });
+      }, { transaction });
 
       logger.debug('Usuario y historial de ping actualizados correctamente');
-    } catch (error) {
-      logger.error('Error al actualizar usuario o historial:', error);
-    }
+
+      // Buscar información del último usuario que hizo ping (si existe)
+      let lastUser = null;
+      if (lastPingHistory?.lastPingUserId) {
+        lastUser = await User.findOne({
+          where: { id: lastPingHistory.lastPingUserId },
+          transaction
+        });
+      }
+
+      return [lastUser];
+    }, "Actualización de registros de ping");
 
     // Responder con la información del último usuario
     if (lastPingUser) {

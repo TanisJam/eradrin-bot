@@ -5,6 +5,7 @@ import { generateCombatDescription } from '../constants/CombatDescriptions';
 import User from '../database/models/User';
 import { BaseService } from './BaseService';
 import sequelize from '../database/config';
+import { TransactionService } from './Transaction.service';
 
 /**
  * Servicio para gestionar duelistas y sus acciones
@@ -88,30 +89,40 @@ export class DuelistService extends BaseService {
    * Crea un nuevo duelista o devuelve uno existente
    */
   async createDuelist(userId: string, name: string, race: string) {
-    try {
+    return TransactionService.executeInTransaction(async (transaction) => {
       this.logDebug(`Creando duelista para usuario ${userId}: ${name} (${race})`);
       
-      const existingDuelist = await Duelist.findOne({ where: { userId } });
+      // Buscar duelista existente dentro de la transacción
+      const existingDuelist = await Duelist.findOne({ 
+        where: { userId },
+        transaction
+      });
+      
       if (existingDuelist) {
         this.logInfo(`Duelista existente encontrado para usuario ${userId}`);
         return existingDuelist;
       }
 
       // Verificar si existe el usuario, y crearlo si no existe
-      const user = await User.findByPk(userId);
-      if (!user) {
-        this.logInfo(`Usuario ${userId} no encontrado, creándolo automáticamente`);
-        await User.create({
+      const [user, created] = await User.findOrCreate({
+        where: { id: userId },
+        defaults: {
           id: userId,
           nickName: name,
           lastPing: new Date(),
-        });
+        },
+        transaction
+      });
+
+      if (created) {
+        this.logInfo(`Usuario ${userId} creado automáticamente`);
       }
 
       // Obtener estadísticas basadas en la raza o usar valores predeterminados si la raza no está definida
       const stats = this.raceStats[race as keyof typeof this.raceStats] || this.raceStats['Humano'];
       this.logDebug(`Aplicando estadísticas de raza ${race}: ${JSON.stringify(stats)}`);
 
+      // Crear duelista dentro de la transacción
       const duelist = await Duelist.create({
         userId,
         name,
@@ -128,7 +139,7 @@ export class DuelistService extends BaseService {
           consciousness: 100,
           fatigue: 0,
         },
-      });
+      }, { transaction });
 
       // Crear partes del cuerpo por defecto con valores de salud realistas
       const bodyParts = [
@@ -140,20 +151,19 @@ export class DuelistService extends BaseService {
         { name: 'Pierna Derecha', health: 70, type: 'leg' },
       ];
 
+      // Crear todas las partes del cuerpo en paralelo pero dentro de la transacción
       await Promise.all(
         bodyParts.map((part) =>
           BodyPart.create({
             duelistId: duelist.id,
             ...part,
-          })
+          }, { transaction })
         )
       );
 
       this.logInfo(`Duelista creado exitosamente: ${name} (ID: ${duelist.id})`);
       return duelist;
-    } catch (error) {
-      return this.handleError(error, `Error al crear duelista ${name}`);
-    }
+    }, `Crear duelista para usuario ${userId}`);
   }
 
   /**

@@ -7,6 +7,7 @@ import { getAiModel } from '../ai-model';
 import { Op } from 'sequelize';
 import BodyPart from '../database/models/BodyPart';
 import sequelize from '../database/config';
+import { TransactionService } from './Transaction.service';
 
 // Constantes para umbrales críticos
 const THRESHOLDS = {
@@ -89,10 +90,7 @@ export class CombatService extends BaseService {
    * Inicia un nuevo combate entre dos duelistas
    */
   async startCombate(attackerId: number, defenderId: number): Promise<Combat> {
-    // Iniciar transacción para asegurar consistencia
-    const transaction = await sequelize.transaction();
-    
-    try {
+    return TransactionService.executeInTransaction(async (transaction) => {
       this.logDebug(`Iniciando combate entre ${attackerId} y ${defenderId}`);
       
       // Comprobar si ya existe un combate activo entre estos duelistas
@@ -107,13 +105,14 @@ export class CombatService extends BaseService {
 
       if (existingCombat) {
         this.logInfo(`Combate ya existente: ${existingCombat.id}`);
-        await transaction.commit();
         return existingCombat;
       }
 
       // Verificar que ambos duelistas existen
-      const attacker = await Duelist.findByPk(attackerId, { transaction });
-      const defender = await Duelist.findByPk(defenderId, { transaction });
+      const [attacker, defender] = await Promise.all([
+        Duelist.findByPk(attackerId, { transaction }),
+        Duelist.findByPk(defenderId, { transaction })
+      ]);
       
       if (!attacker || !defender) {
         throw new Error(`Duelista no encontrado: ${!attacker ? 'atacante' : 'defensor'} (ID: ${!attacker ? attackerId : defenderId})`);
@@ -127,24 +126,15 @@ export class CombatService extends BaseService {
           ? attackerId 
           : defenderId;
 
-      const combat = await Combat.create({
+      // Usar el método create de la instancia del modelo
+      return await Combat.create({
         attackerId,
         defenderId,
         currentDuelistId: starterDuelistId,
         lastActionTimestamp: new Date(),
         combatLog: [`¡Combate iniciado entre ${attacker.name} y ${defender.name}!`]
       }, { transaction });
-
-      // Confirmar transacción
-      await transaction.commit();
-      
-      this.logInfo(`Nuevo combate creado: ${combat.id}`);
-      return combat;
-    } catch (error) {
-      // Revertir transacción en caso de error
-      await transaction.rollback();
-      return this.handleError(error, `Error al iniciar combate`);
-    }
+    }, "Iniciar combate entre duelistas");
   }
 
   /**
