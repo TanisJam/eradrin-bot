@@ -1,4 +1,4 @@
-import { conditionallyUnderline } from '../utils/format-text';
+import { conditionallyUnderline } from '../../utils/format-text';
 import { Nivel20character } from './nivel20response';
 import { AbilityScores, SavingThrows, Skills } from './types';
 import { ABILITY_NAMES, SKILL_DEFINITIONS } from './constants';
