@@ -1,5 +1,5 @@
-import { initDatabase } from '../src/database/config';
-import '../src/database/models/ImpersonationCharacter'; // Importar el modelo para asegurarnos de que se registre
+import { initDatabase } from '../database/config';
+import '../database/models/ImpersonationCharacter'; // Importar el modelo para asegurarnos de que se registre
 
 /**
  * Script para sincronizar la base de datos con los modelos actualizados

@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
-import config from '../src/config';
-import ImpersonationCharacter from '../src/database/models/ImpersonationCharacter';
+import config from '../config';
+import ImpersonationCharacter from '../database/models/ImpersonationCharacter';
 
 /**
  * Script para recrear la tabla ImpersonationCharacters
