@@ -1,13 +1,12 @@
 import { Sequelize } from 'sequelize';
 import config from '../config';
-import databaseConfig from './database-config';
 import { logger } from '../utils/logger';
 
 // Sequelize instance for SQLite connection
 const sequelize = new Sequelize({
-  dialect: databaseConfig.dialect as 'sqlite',
-  storage: databaseConfig.storage,
-  logging: false
+  dialect: config.database.dialect as 'sqlite',
+  storage: config.database.storage,
+  logging: config.database.logging ? console.log : false
 });
 
 /**

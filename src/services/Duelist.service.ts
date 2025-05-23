@@ -6,81 +6,12 @@ import User from '../database/models/User';
 import { BaseService } from './BaseService';
 import sequelize from '../database/config';
 import { TransactionService } from './Transaction.service';
+import { DND_RACES, RACE_STATS } from '../constants/RaceStats';
 
 /**
  * Servicio para gestionar duelistas y sus acciones
  */
 export class DuelistService extends BaseService {
-  private readonly dndRaces = [
-    'Humano',
-    'Elfo',
-    'Enano',
-    'Mediano',
-    'Dracónido',
-    'Gnomo',
-    'Semielfo',
-    'Semiorco',
-    'Tiefling',
-  ];
-
-  // Modificadores de estadísticas para cada raza
-  private readonly raceStats = {
-    'Humano': {
-      strength: 10,
-      agility: 10,
-      endurance: 10,
-      recovery: 10
-    },
-    'Elfo': {
-      strength: 8,
-      agility: 14, 
-      endurance: 8,
-      recovery: 10
-    },
-    'Enano': {
-      strength: 12,
-      agility: 7,
-      endurance: 14,
-      recovery: 12
-    },
-    'Mediano': {
-      strength: 7,
-      agility: 12,
-      endurance: 9,
-      recovery: 11
-    },
-    'Dracónido': {
-      strength: 13,
-      agility: 8,
-      endurance: 12,
-      recovery: 7
-    },
-    'Gnomo': {
-      strength: 6,
-      agility: 13,
-      endurance: 8,
-      recovery: 8
-    },
-    'Semielfo': {
-      strength: 9,
-      agility: 12,
-      endurance: 9,
-      recovery: 10
-    },
-    'Semiorco': {
-      strength: 14,
-      agility: 8,
-      endurance: 11,
-      recovery: 8
-    },
-    'Tiefling': {
-      strength: 10,
-      agility: 11,
-      endurance: 9,
-      recovery: 13
-    }
-  };
-
   constructor() {
     super('DuelistService');
   }
@@ -119,7 +50,7 @@ export class DuelistService extends BaseService {
       }
 
       // Obtener estadísticas basadas en la raza o usar valores predeterminados si la raza no está definida
-      const stats = this.raceStats[race as keyof typeof this.raceStats] || this.raceStats['Humano'];
+      const stats = RACE_STATS[race as keyof typeof RACE_STATS] || RACE_STATS['Humano'];
       this.logDebug(`Aplicando estadísticas de raza ${race}: ${JSON.stringify(stats)}`);
 
       // Crear duelista dentro de la transacción
@@ -719,7 +650,7 @@ export class DuelistService extends BaseService {
       this.logDebug(`Creando duelista para usuario ${userId}: ${name} (${race})`);
       
       // Obtener estadísticas basadas en la raza
-      const stats = this.raceStats[race as keyof typeof this.raceStats] || this.raceStats['Humano'];
+      const stats = RACE_STATS[race as keyof typeof RACE_STATS] || RACE_STATS['Humano'];
       this.logDebug(`Aplicando estadísticas de raza ${race}: ${JSON.stringify(stats)}`);
 
       // Crear el duelista directamente en esta transacción
@@ -791,8 +722,8 @@ export class DuelistService extends BaseService {
    * Obtiene una raza D&D aleatoria
    */
   private getRandomDndRace(): string {
-    const randomIndex = Math.floor(Math.random() * this.dndRaces.length);
-    return this.dndRaces[randomIndex];
+    const randomIndex = Math.floor(Math.random() * DND_RACES.length);
+    return DND_RACES[randomIndex];
   }
 
   /**
