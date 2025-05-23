@@ -2,12 +2,14 @@
   "name": "eradrin-bot",
   "version": "1.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/bot.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "concurrently \"tsc -w\" \"nodemon dist/index.js\"",
+    "start": "node dist/bot.js",
+    "dev": "concurrently \"tsc -w\" \"nodemon dist/bot.js\"",
     "deploy:commands": "tsc && node dist/deploy-commands.js",
+    "safe-start": "tsx scripts/safe-start.ts",
+    "safe-start:js": "tsc && node scripts/safe-start.js",
     "ingest-knowledge": "pnpm exec tsx scripts/ingest-knowledge.ts",
     "verify-knowledge": "pnpm exec tsx scripts/verify-knowledge.ts",
     "clear-knowledge": "pnpm exec tsx scripts/clear-knowledge.ts"
