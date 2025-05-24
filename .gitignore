@@ -3,3 +3,6 @@ node_modules
 .env
 
 dist
+
+# Test coverage reports
+coverage/
