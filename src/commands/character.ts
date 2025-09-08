@@ -7,7 +7,7 @@ import { Nivel20Service } from '../services/nivel20.service';
 import { createCharacterButtons } from '../utils/discord.utils';
 
 const INTERACTION_TIMEOUT = 60000; // 1 min
-const nivel20Service = new Nivel20Service();
+export const nivel20Service = new Nivel20Service();
 
 export const data = new SlashCommandBuilder()
   .setName('character')

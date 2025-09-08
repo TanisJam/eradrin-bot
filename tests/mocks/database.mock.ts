@@ -1,33 +1,64 @@
 import { Model } from 'sequelize';
 
-// Mock para User
-export const mockUser = {
+// Tipo base para nuestros modelos mockados
+interface MockModel {
+  [key: string]: jest.Mock | any;
+}
+
+// Mock para modelos de base de datos
+
+// Para User
+export const mockUser: MockModel = {
   findOne: jest.fn(),
   findByPk: jest.fn(),
   findAll: jest.fn(),
   findOrCreate: jest.fn(),
   create: jest.fn(),
+  update: jest.fn(),
   destroy: jest.fn(),
-  prototype: {
-    save: jest.fn(),
-    updateLastPing: jest.fn()
-  }
+  belongsTo: jest.fn()
 };
 
-// Mock para PingHistory
-export const mockPingHistory = {
+// Para PingHistory
+export const mockPingHistory: MockModel = {
   findOne: jest.fn(),
   findAll: jest.fn(),
   create: jest.fn(),
   destroy: jest.fn(),
+  belongsTo: jest.fn()
+};
+
+// Para Duelist
+export const mockDuelist: MockModel = {
+  findOne: jest.fn(),
+  findOrCreate: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  destroy: jest.fn(),
   belongsTo: jest.fn(),
-  prototype: {
-    save: jest.fn()
-  }
+  hasMany: jest.fn()
+};
+
+// Para BodyPart
+export const mockBodyPart: MockModel = {
+  findAll: jest.fn(),
+  findOne: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  destroy: jest.fn(),
+  belongsTo: jest.fn()
+};
+
+// Para Combat
+export const mockCombat: MockModel = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  destroy: jest.fn()
 };
 
 // Mock para sequelize
-export const mockSequelize = {
+export const mockSequelize: MockModel = {
   sync: jest.fn().mockResolvedValue(true),
   transaction: jest.fn().mockReturnValue({
     commit: jest.fn().mockResolvedValue(undefined),
@@ -38,8 +69,31 @@ export const mockSequelize = {
   define: jest.fn().mockReturnValue(Model)
 };
 
-// Funciones para configurar respuestas de los mocks
-export function mockUserFindOrCreate(userData: any, created = true) {
+// Función para resetear todos los mocks
+export const resetMocks = (): void => {
+  jest.clearAllMocks();
+  
+  // Resetear mocks individuales
+  const mockObjects = [
+    mockUser, 
+    mockPingHistory, 
+    mockDuelist, 
+    mockBodyPart, 
+    mockCombat, 
+    mockSequelize
+  ];
+  
+  mockObjects.forEach(mockObj => {
+    for (const key in mockObj) {
+      if (typeof mockObj[key] === 'function' && mockObj[key].mockReset) {
+        mockObj[key].mockReset();
+      }
+    }
+  });
+};
+
+// Funciones helper para configurar los mocks
+export const mockUserFindOrCreate = (userData: any, created = true): any => {
   const userInstance = {
     ...userData,
     save: jest.fn().mockResolvedValue(undefined),
@@ -51,9 +105,9 @@ export function mockUserFindOrCreate(userData: any, created = true) {
   
   mockUser.findOrCreate.mockResolvedValue([userInstance, created]);
   return userInstance;
-}
+};
 
-export function mockUserFindOne(userData: any | null) {
+export const mockUserFindOne = (userData: any | null): any => {
   if (userData === null) {
     mockUser.findOne.mockResolvedValue(null);
     return null;
@@ -70,13 +124,42 @@ export function mockUserFindOne(userData: any | null) {
   
   mockUser.findOne.mockResolvedValue(userInstance);
   return userInstance;
-}
+};
 
-export function mockPingHistoryFindOne(data: any | null) {
+export const mockPingHistoryFindOne = (data: any | null): any => {
   mockPingHistory.findOne.mockResolvedValue(data);
   return data;
-}
+};
 
-export function resetMocks() {
-  jest.resetAllMocks();
-} 
+// Helpers para Duelist
+export const mockDuelistFindOne = (duelistData: any | null): any => {
+  if (duelistData === null) {
+    mockDuelist.findOne.mockResolvedValue(null);
+    return null;
+  }
+  
+  const duelistInstance = {
+    ...duelistData,
+    save: jest.fn().mockResolvedValue(undefined)
+  };
+  
+  mockDuelist.findOne.mockResolvedValue(duelistInstance);
+  return duelistInstance;
+};
+
+// Helpers para BodyPart
+export const mockBodyPartFindAll = (bodyParts: any[]): any[] => {
+  mockBodyPart.findAll.mockResolvedValue(bodyParts);
+  return bodyParts;
+};
+
+// Helpers para Combat
+export const mockCombatCreate = (combatData: any): any => {
+  const combatInstance = {
+    ...combatData,
+    save: jest.fn().mockResolvedValue(undefined)
+  };
+  
+  mockCombat.create.mockResolvedValue(combatInstance);
+  return combatInstance;
+}; 

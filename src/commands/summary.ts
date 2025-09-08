@@ -301,7 +301,9 @@ export async function execute(interaction: CommandInteraction, client: Client) {
     // Verificar si necesitamos truncar la conversación
     const { text: conversationText, wasTruncated } = truncateConversation(rawConversationText);
     
-    const chatSession = model.startChat({
+    // Obtener el modelo de AI dentro de la función execute
+    const aiModel = getAiModel(systemInstruction);
+    const chatSession = aiModel.startChat({
       generationConfig,
     });
 

@@ -2,6 +2,9 @@
 import { mockUser, mockPingHistory, resetMocks, mockUserFindOrCreate, mockUserFindOne, mockPingHistoryFindOne } from '../../mocks/database.mock';
 import { execute } from '../../../src/commands/ping';
 import { TransactionService } from '../../../src/services/Transaction.service';
+import User from '../../../src/database/models/User';
+import PingHistory from '../../../src/database/models/PingHistory';
+import { logger } from '../../../src/utils/logger';
 
 // Mocks
 jest.mock('../../../src/services/Transaction.service');
@@ -48,110 +51,195 @@ describe('Comando ping', () => {
     );
   });
   
-  test('debe responder con el último usuario cuando existe', async () => {
-    // Configurar mocks para simular un usuario previo
-    const mockLastUser = {
-      nickName: 'LastUser',
-      lastPing: new Date(),
-      toLocaleString: () => '01/01/2023'
-    };
+  test('debe registrar al usuario y responder con Pong cuando es el primer ping', async () => {
+    // Mock para PingHistory.findOne (no hay pings previos)
+    (PingHistory.findOne as jest.Mock).mockResolvedValue(null);
     
-    // Mock para PingHistory.findOne
-    mockPingHistoryFindOne({
-      lastPingUserId: '987654321'
+    // Mock para User.findOrCreate (crear nuevo usuario)
+    (User.findOrCreate as jest.Mock).mockResolvedValue([
+      {
+        id: '123456789',
+        nickName: 'TestUser',
+        lastPing: new Date(),
+        save: jest.fn().mockResolvedValue(undefined)
+      },
+      true // usuario creado
+    ]);
+    
+    // Mock para PingHistory.create
+    (PingHistory.create as jest.Mock).mockResolvedValue({});
+    
+    await execute(mockInteraction);
+    
+    // Verificar que se usó el servicio de transacciones
+    expect(TransactionService.executeInTransaction).toHaveBeenCalled();
+    
+    // Verificar que se buscó el último ping
+    expect(PingHistory.findOne).toHaveBeenCalledWith({
+      order: [['createdAt', 'DESC']],
+      transaction: expect.any(Object)
     });
     
-    // Mock para User.findOne y User.findOrCreate
-    mockUserFindOne(mockLastUser);
-    mockUserFindOrCreate({
-      id: '123456789', 
-      nickName: 'TestUser', 
-      lastPing: new Date()
-    }, true);
+    // Verificar que se creó/actualizó el usuario
+    expect(User.findOrCreate).toHaveBeenCalledWith({
+      where: { id: '123456789' },
+      defaults: {
+        id: '123456789',
+        nickName: 'TestUser',
+        lastPing: expect.any(Date)
+      },
+      transaction: expect.any(Object)
+    });
     
-    // Ejecutar comando
-    await execute(mockInteraction);
-    
-    // Verificar resultado
-    expect(mockInteraction.reply).toHaveBeenCalledWith(
-      expect.stringContaining('Pong! Último usuario: LastUser')
+    // Verificar que se creó una entrada en el historial
+    expect(PingHistory.create).toHaveBeenCalledWith(
+      { lastPingUserId: '123456789' },
+      { transaction: expect.any(Object) }
     );
     
-    // Verificar que se guardó la interacción
-    expect(mockPingHistory.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        lastPingUserId: '123456789'
-      }),
-      expect.any(Object)
+    // Verificar que se respondió correctamente
+    expect(mockInteraction.reply).toHaveBeenCalledWith(
+      '🏓 Pong! Eres el primer usuario en usar este comando.'
     );
   });
   
-  test('debe responder correctamente cuando no hay historial previo', async () => {
-    // Configurar mocks para caso sin historial
-    mockPingHistoryFindOne(null);
-    mockUserFindOrCreate({
-      id: '123456789', 
-      nickName: 'TestUser', 
-      lastPing: new Date()
-    }, true);
+  test('debe mostrar información del último usuario que hizo ping', async () => {
+    // Fecha simulada para el último ping
+    const lastPingDate = new Date('2023-01-01T12:00:00');
     
-    // Ejecutar comando
+    // Mock para PingHistory.findOne (hay un ping previo)
+    (PingHistory.findOne as jest.Mock).mockResolvedValue({
+      lastPingUserId: 'previousUser123'
+    });
+    
+    // Mock para User.findOrCreate (usuario existente)
+    (User.findOrCreate as jest.Mock).mockResolvedValue([
+      {
+        id: '123456789',
+        nickName: 'TestUser',
+        lastPing: new Date(),
+        save: jest.fn().mockResolvedValue(undefined)
+      },
+      false // usuario ya existía
+    ]);
+    
+    // Mock para User.findOne (buscar último usuario)
+    (User.findOne as jest.Mock).mockResolvedValue({
+      id: 'previousUser123',
+      nickName: 'PreviousUser',
+      lastPing: lastPingDate
+    });
+    
+    // Mock para PingHistory.create
+    (PingHistory.create as jest.Mock).mockResolvedValue({});
+    
     await execute(mockInteraction);
     
-    // Verificar resultado
+    // Verificar que se buscó al usuario previo
+    expect(User.findOne).toHaveBeenCalledWith({
+      where: { id: 'previousUser123' },
+      transaction: expect.any(Object)
+    });
+    
+    // Verificar que se respondió con la información del último usuario
     expect(mockInteraction.reply).toHaveBeenCalledWith(
-      expect.stringContaining('Pong! Eres el primer usuario')
+      expect.stringContaining('🏓 Pong! Último usuario: PreviousUser')
+    );
+    expect(mockInteraction.reply).toHaveBeenCalledWith(
+      expect.stringContaining(lastPingDate.toLocaleString('es'))
     );
   });
   
-  test('debe actualizar usuario existente', async () => {
-    // Configurar mocks para simular un usuario ya existente
-    const mockExistingUser = { 
-      id: '123456789', 
-      nickName: 'OldNickname', 
-      lastPing: new Date(2022, 0, 1),
+  test('debe actualizar los datos si el usuario ya existe', async () => {
+    // Mock para PingHistory.findOne
+    (PingHistory.findOne as jest.Mock).mockResolvedValue(null);
+    
+    // Mock para el usuario existente con método save
+    const mockUser = {
+      id: '123456789',
+      nickName: 'OldNick',
+      lastPing: new Date('2022-01-01'),
       save: jest.fn().mockResolvedValue(undefined)
     };
     
-    mockPingHistoryFindOne(null);
+    // Mock para User.findOrCreate (usuario existente)
+    (User.findOrCreate as jest.Mock).mockResolvedValue([mockUser, false]);
     
-    // Simular que el usuario existe y se actualiza
-    mockUser.findOrCreate.mockResolvedValue([mockExistingUser, false]);
-    
-    // Ejecutar comando
     await execute(mockInteraction);
     
-    // Verificar que se actualiza el usuario
-    expect(mockExistingUser.nickName).toBe('TestUser');
-    expect(mockExistingUser.lastPing).toBeInstanceOf(Date);
-    expect(mockExistingUser.save).toHaveBeenCalled();
+    // Verificar que se actualizaron los datos del usuario
+    expect(mockUser.nickName).toBe('TestUser');
+    expect(mockUser.lastPing).toBeInstanceOf(Date);
+    expect(mockUser.save).toHaveBeenCalled();
   });
   
-  test('debe manejar errores correctamente', async () => {
-    // Simular un error
+  test('debe manejar errores generales', async () => {
+    // Simular un error en la transacción
     (TransactionService.executeInTransaction as jest.Mock).mockRejectedValue(
-      new Error('Test error')
+      new Error('Database error')
     );
     
-    // Ejecutar comando
     await execute(mockInteraction);
     
-    // Verificar respuesta de error
+    // Verificar que se registró el error
+    expect(logger.error).toHaveBeenCalledWith(
+      'Error general en comando ping:',
+      expect.any(Error)
+    );
+    
+    // Verificar que se respondió con un mensaje de error
     expect(mockInteraction.reply).toHaveBeenCalledWith(
-      expect.stringContaining('Ha ocurrido un error al ejecutar el comando')
+      'Ha ocurrido un error al ejecutar el comando. Inténtalo de nuevo más tarde.'
     );
   });
   
-  test('debe rechazar comandos fuera de un servidor', async () => {
-    // Remover guild para simular comando fuera de servidor
+  test('debe rechazar el comando si no se usa en un servidor', async () => {
+    // Modificar el mock para simular que no hay guild
     mockInteraction.guild = null;
     
-    // Ejecutar comando
     await execute(mockInteraction);
     
     // Verificar que se rechaza el comando
     expect(mockInteraction.reply).toHaveBeenCalledWith(
       'Este comando solo puede ser usado en un servidor.'
+    );
+    
+    // Verificar que no se realizaron operaciones de base de datos
+    expect(TransactionService.executeInTransaction).not.toHaveBeenCalled();
+  });
+  
+  test('debe usar el nombre de usuario si no hay nickname', async () => {
+    // Modificar el mock para simular ausencia de nickname
+    mockInteraction.guild.members.fetch.mockResolvedValue({
+      nickname: null,
+      user: {
+        username: 'TestUser',
+        id: '123456789'
+      },
+      id: '123456789'
+    });
+    
+    // Mock para PingHistory y User
+    (PingHistory.findOne as jest.Mock).mockResolvedValue(null);
+    (User.findOrCreate as jest.Mock).mockResolvedValue([
+      {
+        id: '123456789',
+        nickName: 'TestUser',
+        lastPing: new Date(),
+        save: jest.fn().mockResolvedValue(undefined)
+      },
+      true
+    ]);
+    
+    await execute(mockInteraction);
+    
+    // Verificar que se usó el nombre de usuario en lugar del nickname
+    expect(User.findOrCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        defaults: expect.objectContaining({
+          nickName: 'TestUser'
+        })
+      })
     );
   });
 }); 
