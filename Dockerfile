@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package*.json pnpm-lock.yaml ./
 
 # Instalar dependencias incluyendo devDependencies para el build
-RUN pnpm install --frozen-lockfile --include=dev \
+RUN pnpm install --prod=false \
     && cd node_modules/sqlite3 \
     && pnpm run install --build-from-source
 
@@ -28,11 +28,12 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++ gcc musl-dev \
     && npm install -g pnpm
 
-# Copy package files, built files, and node_modules
+# Copy package files and install only production dependencies
 COPY --from=builder /app/package*.json /app/pnpm-lock.yaml ./
+RUN pnpm install --prod
+
+# Copy built files and database
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-# Copy database file
 COPY --from=builder /app/database.sqlite ./database.sqlite
 
 # Verify files were copied correctly
