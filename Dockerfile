@@ -3,19 +3,16 @@ FROM node:20
 WORKDIR /app
 
 # Copiar archivos de configuración
-COPY package*.json pnpm-lock.yaml ./
+COPY package*.json ./
 
-# Instalar pnpm
-RUN npm install -g pnpm
-
-# Instalar todas las dependencias
-RUN pnpm install
+# Instalar dependencias con npm (no pnpm)
+RUN npm install
 
 # Copiar el código fuente
 COPY . .
 
 # Compilar TypeScript
-RUN pnpm run build
+RUN npm run build
 
 # Comando para ejecutar la aplicación
 CMD ["node", "dist/src/index.js"]
