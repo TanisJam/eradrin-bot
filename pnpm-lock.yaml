@@ -20,6 +20,9 @@ importers:
       cheerio:
         specifier: ^1.0.0-rc.12
         version: 1.0.0
+      discord.js:
+        specifier: ^14.15.3
+        version: 14.16.1
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -39,9 +42,6 @@ importers:
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2
-      discord.js:
-        specifier: ^14.15.3
-        version: 14.16.1
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.5.2)(ts-node@10.9.2(@types/node@22.5.2)(typescript@5.5.4))
