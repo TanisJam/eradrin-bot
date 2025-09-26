@@ -1,7 +1,8 @@
 FROM node:20-alpine
 
 # Instalar dependencias del sistema necesarias
-RUN apk add --no-cache python3 make g++ gcc musl-dev
+RUN apk add --no-cache python3 py3-pip py3-setuptools make g++ gcc musl-dev \
+    && python3 -m pip install --break-system-packages setuptools
 
 WORKDIR /app
 
@@ -11,11 +12,11 @@ COPY package*.json pnpm-lock.yaml ./
 # Instalar pnpm
 RUN npm install -g pnpm
 
-# Configurar pnpm para permitir build scripts y instalar dependencias
-RUN pnpm config set ignore-scripts false \
-    && pnpm install --prod=false \
-    && cd node_modules/.pnpm/sqlite3@5.1.7/node_modules/sqlite3 \
-    && npm run install --build-from-source
+# Instalar dependencias
+RUN pnpm install --prod=false
+
+# Compilar sqlite3 explícitamente
+RUN pnpm rebuild sqlite3
 
 # Copiar el código fuente
 COPY . .
