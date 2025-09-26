@@ -9,14 +9,15 @@ WORKDIR /app
 # Copy package files
 COPY package*.json pnpm-lock.yaml ./
 
-# Instalar dependencias y compilar sqlite3
-RUN pnpm install --frozen-lockfile \
+# Instalar dependencias incluyendo devDependencies para el build
+RUN pnpm install --frozen-lockfile --include=dev \
     && cd node_modules/sqlite3 \
     && pnpm run install --build-from-source
 
 # Copy source files and build
 COPY . .
-RUN pnpm run build && ls -la dist/ && echo "Build completed successfully"
+RUN which tsc && tsc --version && echo "TypeScript is available" \
+    && pnpm run build && ls -la dist/ && echo "Build completed successfully"
 
 # Production stage
 FROM node:20-alpine
@@ -35,7 +36,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/database.sqlite ./database.sqlite
 
 # Verify files were copied correctly
-RUN ls -la dist/ && echo "Files copied successfully"
+RUN ls -la dist/ && ls -la dist/src/ && echo "Files copied successfully"
 
 # Command to run the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/src/index.js"]
