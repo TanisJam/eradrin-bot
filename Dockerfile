@@ -30,7 +30,9 @@ RUN apk add --no-cache python3 make g++ gcc musl-dev \
 
 # Copy package files and install only production dependencies
 COPY --from=builder /app/package*.json /app/pnpm-lock.yaml ./
-RUN pnpm install --prod
+RUN pnpm config set ignore-scripts false \
+    && pnpm install --prod \
+    && pnpm rebuild sqlite3
 
 # Copy built files and database
 COPY --from=builder /app/dist ./dist
