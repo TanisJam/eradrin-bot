@@ -1,45 +1,30 @@
-FROM node:20-alpine AS builder
-
-# Instalar pnpm y dependencias necesarias para compilar sqlite3
-RUN apk add --no-cache python3 make g++ gcc musl-dev \
-    && npm install -g pnpm typescript
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json pnpm-lock.yaml ./
-
-# Instalar dependencias incluyendo devDependencies para el build
-RUN pnpm install --prod=false \
-    && cd node_modules/sqlite3 \
-    && pnpm run install --build-from-source
-
-# Copy source files and build
-COPY . .
-RUN which tsc && tsc --version && echo "TypeScript is available" \
-    && pnpm run build && ls -la dist/ && echo "Build completed successfully"
-
-# Production stage
 FROM node:20-alpine
 
+# Instalar dependencias del sistema necesarias
+RUN apk add --no-cache python3 make g++ gcc musl-dev
+
 WORKDIR /app
 
-# Instalar dependencias necesarias para la ejecución
-RUN apk add --no-cache python3 make g++ gcc musl-dev \
-    && npm install -g pnpm
+# Copiar archivos de configuración
+COPY package*.json pnpm-lock.yaml ./
 
-# Copy package files and install only production dependencies
-COPY --from=builder /app/package*.json /app/pnpm-lock.yaml ./
+# Instalar pnpm
+RUN npm install -g pnpm
+
+# Configurar pnpm para permitir build scripts y instalar dependencias
 RUN pnpm config set ignore-scripts false \
-    && pnpm install --prod \
-    && pnpm rebuild sqlite3
+    && pnpm install --prod=false \
+    && cd node_modules/.pnpm/sqlite3@5.1.7/node_modules/sqlite3 \
+    && npm run install --build-from-source
 
-# Copy built files and database
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/database.sqlite ./database.sqlite
+# Copiar el código fuente
+COPY . .
 
-# Verify files were copied correctly
-RUN ls -la dist/ && ls -la dist/src/ && echo "Files copied successfully"
+# Compilar TypeScript
+RUN pnpm run build
 
-# Command to run the application
+# Limpiar devDependencies para producción
+RUN pnpm prune --prod
+
+# Comando para ejecutar la aplicación
 CMD ["node", "dist/src/index.js"]
