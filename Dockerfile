@@ -35,4 +35,4 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/database.sqlite ./database.sqlite
 
 # Command to run the application
-CMD ["node", "dist/bot.js"]
+CMD ["node", "dist/index.js"]
