@@ -1,82 +1,84 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, ComponentType } from 'discord.js';
-import { CharacterService } from '../services/Character.service';
+import { DuelistService } from '../services/Duelist.service';
 import { CombatService } from '../services/Combat.service';
-import Character from '../database/models/Character';
+import Duelist from '../database/models/Duelist';
 import { BODY_PARTS } from '../types/Combat.type';
 import Combat from '../database/models/Combat';
 import BodyPart from '../database/models/BodyPart';
+import { TransactionService } from '../services/Transaction.service';
+import { logger } from '../utils/logger';
 
 // Crear instancias de los servicios
-const characterService = new CharacterService();
+const duelistService = new DuelistService();
 const combatService = new CombatService();
 
-// Helper function to check if a character can engage in combat
-const canEngageInCombat = (character: Character): { canEngage: boolean; reason: string } => {
-  if (character.conditions.includes('permanent_death')) {
+// Helper function to check if a duelist can engage in combat
+const canEngageInCombat = (duelist: Duelist): { canEngage: boolean; reason: string } => {
+  if (duelist.conditions.includes('permanent_death')) {
     return { canEngage: false, reason: 'ha muerto permanentemente' };
   }
-  if (character.conditions.includes('dead')) {
+  if (duelist.conditions.includes('dead')) {
     return { canEngage: false, reason: 'está muerto' };
   }
-  if (character.conditions.includes('dying')) {
+  if (duelist.conditions.includes('dying')) {
     return { canEngage: false, reason: 'está agonizando' };
   }
-  if (character.conditions.includes('unconscious')) {
+  if (duelist.conditions.includes('unconscious')) {
     return { canEngage: false, reason: 'está inconsciente' };
   }
-  if (character.conditions.includes('incapacitated')) {
+  if (duelist.conditions.includes('incapacitated')) {
     return { canEngage: false, reason: 'está incapacitado' };
   }
   return { canEngage: true, reason: '' };
 };
 
-// Agregar función para formatear el estado general y condiciones del personaje
-const formatCharacterStatus = (character: Character, bodyParts: BodyPart[]) => {
-  // Determinar el estado general del personaje
+// Agregar función para formatear el estado general y condiciones del duelista
+const formatDuelistStatus = (duelist: Duelist, bodyParts: BodyPart[]) => {
+  // Determinar el estado general del duelista
   let generalStateEmoji = '✅'; // Estado normal por defecto
   let stateDescription = '';
   
   // Verificar si hay condiciones especiales
-  if (character.conditions.includes('permanent_death')) {
+  if (duelist.conditions.includes('permanent_death')) {
     generalStateEmoji = '☠️';
     stateDescription = '**MUERTO PERMANENTEMENTE**';
-  } else if (character.conditions.includes('dead')) {
+  } else if (duelist.conditions.includes('dead')) {
     generalStateEmoji = '⚰️';
     stateDescription = '**MUERTO**';
-  } else if (character.conditions.includes('dying')) {
+  } else if (duelist.conditions.includes('dying')) {
     generalStateEmoji = '💀';
     stateDescription = '**MURIENDO**';
-  } else if (character.conditions.includes('unconscious')) {
+  } else if (duelist.conditions.includes('unconscious')) {
     generalStateEmoji = '😴';
     stateDescription = '**INCONSCIENTE**';
-  } else if (character.conditions.includes('incapacitated')) {
+  } else if (duelist.conditions.includes('incapacitated')) {
     generalStateEmoji = '🤕';
     stateDescription = '**INCAPACITADO**';
-  } else if (character.conditions.includes('severely_injured')) {
+  } else if (duelist.conditions.includes('severely_injured')) {
     generalStateEmoji = '🩸';
     stateDescription = '**HERIDO GRAVE**';
-  } else if (character.conditions.includes('injured')) {
+  } else if (duelist.conditions.includes('injured')) {
     generalStateEmoji = '🩹';
     stateDescription = '**HERIDO**';
-  } else if (character.conditions.includes('hemorrhage')) {
+  } else if (duelist.conditions.includes('hemorrhage')) {
     generalStateEmoji = '🩸';
     stateDescription = '**HEMORRAGIA**';
-  } else if (character.conditions.includes('severe_bleeding')) {
+  } else if (duelist.conditions.includes('severe_bleeding')) {
     generalStateEmoji = '🩸';
     stateDescription = '**SANGRADO SEVERO**';
-  } else if (character.conditions.includes('bleeding')) {
+  } else if (duelist.conditions.includes('bleeding')) {
     generalStateEmoji = '🩸';
     stateDescription = '**SANGRADO**';
   } 
   
   // Verificar estados críticos en parámetros vitales
-  if (character.status.consciousness <= 10 && !character.conditions.includes('permanent_death') && !character.conditions.includes('dead')) {
+  if (duelist.status.consciousness <= 10 && !duelist.conditions.includes('permanent_death') && !duelist.conditions.includes('dead')) {
     generalStateEmoji = '😵';
     stateDescription = stateDescription || '**ATURDIDO**';
-  } else if (character.status.pain >= 80 && !character.conditions.includes('permanent_death') && !character.conditions.includes('dead')) {
+  } else if (duelist.status.pain >= 80 && !duelist.conditions.includes('permanent_death') && !duelist.conditions.includes('dead')) {
     generalStateEmoji = '😖';
     stateDescription = stateDescription || '**DOLOR EXTREMO**';
-  } else if (character.status.fatigue >= 80 && !character.conditions.includes('permanent_death') && !character.conditions.includes('dead')) {
+  } else if (duelist.status.fatigue >= 80 && !duelist.conditions.includes('permanent_death') && !duelist.conditions.includes('dead')) {
     generalStateEmoji = '😩';
     stateDescription = stateDescription || '**AGOTADO**';
   }
@@ -100,7 +102,7 @@ const formatCharacterStatus = (character: Character, bodyParts: BodyPart[]) => {
   }
   
   // Agregar mensaje especial para muerte permanente
-  if (character.conditions.includes('permanent_death')) {
+  if (duelist.conditions.includes('permanent_death')) {
     return `${generalStateEmoji} **¡MUERTO PERMANENTEMENTE!** ${generalStateEmoji}`;
   }
   
@@ -115,20 +117,20 @@ const formatCharacterStatus = (character: Character, bodyParts: BodyPart[]) => {
   // Solo mostrar parámetros vitales si son relevantes
   let vitalInfo = [];
   
-  if (character.status.bleeding > 10) {
-    vitalInfo.push(`🩸 ${character.status.bleeding > 50 ? '**Sangrado**' : 'Sangrado'}: ${character.status.bleeding}/100`);
+  if (duelist.status.bleeding > 10) {
+    vitalInfo.push(`🩸 ${duelist.status.bleeding > 50 ? '**Sangrado**' : 'Sangrado'}: ${duelist.status.bleeding}/100`);
   }
   
-  if (character.status.consciousness < 90) {
-    vitalInfo.push(`😵 ${character.status.consciousness < 30 ? '**Conciencia**' : 'Conciencia'}: ${character.status.consciousness}/100`);
+  if (duelist.status.consciousness < 90) {
+    vitalInfo.push(`😵 ${duelist.status.consciousness < 30 ? '**Conciencia**' : 'Conciencia'}: ${duelist.status.consciousness}/100`);
   }
   
-  if (character.status.pain > 20) {
-    vitalInfo.push(`😖 ${character.status.pain > 70 ? '**Dolor**' : 'Dolor'}: ${character.status.pain}/100`);
+  if (duelist.status.pain > 20) {
+    vitalInfo.push(`😖 ${duelist.status.pain > 70 ? '**Dolor**' : 'Dolor'}: ${duelist.status.pain}/100`);
   }
   
-  if (character.status.fatigue > 30) {
-    vitalInfo.push(`😩 ${character.status.fatigue > 70 ? '**Fatiga**' : 'Fatiga'}: ${character.status.fatigue}/100`);
+  if (duelist.status.fatigue > 30) {
+    vitalInfo.push(`😩 ${duelist.status.fatigue > 70 ? '**Fatiga**' : 'Fatiga'}: ${duelist.status.fatigue}/100`);
   }
   
   // Si no hay condiciones ni estados vitales significativos, mostrar un mensaje positivo
@@ -253,563 +255,598 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    try {
-      // Obtener o crear personajes
-      let attackerChar = await Character.findOne({
-        where: { userId: interaction.user.id },
-      });
+    // Utilizar transacción multi-modelo para obtener toda la información necesaria
+    const duelData = await TransactionService.executeMultiModelTransaction({
+      // 1. Obtener o crear duelistas
+      duelists: async (transaction) => {
+        let attackerChar = await Duelist.findOne({
+          where: { userId: interaction.user.id },
+          transaction
+        });
 
-      if (!attackerChar) {
-        attackerChar = await characterService.generateRandomCharacter(
-          interaction.user.id,
-          interaction.user.username
-        );
-      }
-
-      let defenderChar = await Character.findOne({
-        where: { userId: targetUser.id },
-      });
-
-      if (!defenderChar) {
-        defenderChar = await characterService.generateRandomCharacter(
-          targetUser.id,
-          targetUser.username
-        );
-      }
-
-      // Verificar si alguno de los personajes está muerto permanentemente o en un estado que le impide combatir
-      const attackerStatus = canEngageInCombat(attackerChar);
-      if (!attackerStatus.canEngage) {
-        await interaction.editReply(`❌ **Error:** No puedes iniciar un combate porque tu personaje ${attackerStatus.reason}. ${attackerStatus.reason !== 'ha muerto permanentemente' ? 'Debes recuperarte primero.' : ''}`);
-        return;
-      }
-
-      const defenderStatus = canEngageInCombat(defenderChar);
-      if (!defenderStatus.canEngage) {
-        await interaction.editReply(`❌ **Error:** No puedes desafiar a ${targetUser.username} porque su personaje ${defenderStatus.reason}.`);
-        return;
-      }
-
-      // Obtener las partes del cuerpo para cada personaje
-      const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-      const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-      
-      const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
-      const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
-      
-      // Iniciar un combate por turnos
-      const combat = await combatService.startCombate(attackerChar.id, defenderChar.id);
-      
-      // Determinar quién comienza
-      const firstPlayer = combat.currentCharacterId === attackerChar!.id 
-        ? interaction.user 
-        : targetUser;
-      
-      // Crear embed para mostrar la información del combate
-      let embed = new EmbedBuilder()
-        .setColor(0xFF0000)
-        .setTitle(`⚔️ ¡Combate iniciado! ⚔️`)
-        .setDescription(`${interaction.user} ha desafiado a ${targetUser} a un duelo.`)
-        .addFields(
-          { 
-            name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-            value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-            inline: true 
-          },
-          { 
-            name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-            value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-            inline: true 
-          },
-          { name: '\u200B', value: '\u200B' },
-          { 
-            name: '🩹 Heridas', 
-            value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-            inline: false 
-          },
-          { name: '⏱️ Turno de', value: `${firstPlayer.displayName || firstPlayer.username}`, inline: false }
-        )
-        .setFooter({ text: `Combate #${combat.id} - Ronda ${combat.roundCount}` });
-
-      // Crear botones para acciones
-      const attackButton = new ButtonBuilder()
-        .setCustomId(`attack_${combat.id}`)
-        .setLabel('Atacar')
-        .setStyle(ButtonStyle.Danger);
-        
-      const defendButton = new ButtonBuilder()
-        .setCustomId(`defend_${combat.id}`)
-        .setLabel('Defender')
-        .setStyle(ButtonStyle.Primary);
-        
-      const recoverButton = new ButtonBuilder()
-        .setCustomId(`recover_${combat.id}`)
-        .setLabel('Recuperarse')
-        .setStyle(ButtonStyle.Success);
-        
-      const surrenderButton = new ButtonBuilder()
-        .setCustomId(`surrender_${combat.id}`)
-        .setLabel('Rendirse')
-        .setStyle(ButtonStyle.Secondary);
-
-      const actionRow = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(attackButton, defendButton, recoverButton, surrenderButton);
-
-      // Enviar mensaje con información del combate y botones de acción
-      const response = await interaction.editReply({
-        content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${firstPlayer.displayName || firstPlayer.username}**`,
-        embeds: [embed],
-        components: [actionRow],
-        files: [
-          {
-            attachment: interaction.user.displayAvatarURL({ size: 128 }),
-            name: 'attacker.png',
-          },
-          {
-            attachment: targetUser.displayAvatarURL({ size: 128 }),
-            name: 'defender.png',
-          },
-        ],
-      });
-      
-      // Configurar colector de interacciones para los botones
-      const collector = response.createMessageComponentCollector({ 
-        componentType: ComponentType.Button, 
-        time: 10 * 60 * 1000 // 10 minutos
-      });
-      
-      collector.on('collect', async (i) => {
-        try {
-          // Obtener la instancia más reciente del combate desde la base de datos
-          const updatedCombat = await Combat.findByPk(combat.id);
-          if (!updatedCombat || !updatedCombat.isActive) {
-            await i.reply({ 
-              content: 'Este combate ya ha terminado o no existe', 
-              ephemeral: true 
-            });
-            collector.stop();
-            return;
-          }
-          
-          // Actualizar la referencia local
-          Object.assign(combat, updatedCombat);
-          
-          // Verificar si es el turno del usuario que hizo clic
-          const currentTurnUserId = combat.currentCharacterId === attackerChar!.id 
-            ? interaction.user.id 
-            : targetUser.id;
-            
-          if (i.user.id !== currentTurnUserId) {
-            await i.reply({ 
-              content: `¡No es tu turno! Es el turno de ${currentTurnUserId === interaction.user.id ? interaction.user.username : targetUser.username}`, 
-              ephemeral: true 
-            });
-            return;
-          }
-          
-          // Extraer acción y ID del combate para botones principales
-          const [action, combatId] = i.customId.split('_');
-          
-          if (action === 'surrender') {
-            // Manejar rendición
-            const currentCharId = i.user.id === interaction.user.id ? attackerChar!.id : defenderChar!.id;
-            const result = await combatService.abandonCombat(Number(combatId), currentCharId);
-            
-            // Actualizar caracteres
-            attackerChar = await Character.findByPk(attackerChar!.id);
-            defenderChar = await Character.findByPk(defenderChar!.id);
-            
-            // Obtener las partes del cuerpo para cada personaje
-            const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-            const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-            
-            // Actualizar mensaje con resultado final
-            const finalEmbed = new EmbedBuilder()
-              .setColor(0x00FF00)
-              .setTitle('¡Combate finalizado!')
-              .setDescription(result.message)
-              .addFields(
-                { 
-                  name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                  inline: true 
-                },
-                { 
-                  name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                  inline: true 
-                },
-                { name: '\u200B', value: '\u200B' },
-                { 
-                  name: '🩹 Heridas finales', 
-                  value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                  inline: false 
-                }
-              )
-              .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
-              
-            await i.update({ embeds: [finalEmbed], components: [] });
-            collector.stop();
-            return;
-          }
-          
-          if (action === 'attack') {
-            // Elegir una parte del cuerpo al azar
-            const randomBodyPart = BODY_PARTS[Math.floor(Math.random() * BODY_PARTS.length)];
-            const currentCharId = i.user.id === interaction.user.id ? attackerChar!.id : defenderChar!.id;
-            
-            try {
-              // Mostrar mensaje de qué parte se está atacando
-              await i.update({ 
-                content: `**Atacando aleatoriamente la ${randomBodyPart}...**`,
-                components: [] 
-              });
-              
-              const result = await combatService.processTurn(
-                Number(combatId),
-                currentCharId,
-                'attack',
-                randomBodyPart
-              );
-              
-              // Verificar si el combate ha terminado
-              if (result.message) {
-                // Actualizar caracteres
-                attackerChar = await Character.findByPk(attackerChar!.id);
-                defenderChar = await Character.findByPk(defenderChar!.id);
-                
-                // Obtener las partes del cuerpo para la información final
-                const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-                const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-                
-                // Crear el embed final del combate
-                const finalEmbed = new EmbedBuilder()
-                  .setColor(0x00FF00)
-                  .setTitle('¡Combate finalizado!')
-                  .setDescription(result.message)
-                  .addFields(
-                    { 
-                      name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                      value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                      inline: true 
-                    },
-                    { 
-                      name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                      value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                      inline: true 
-                    },
-                    { name: '\u200B', value: '\u200B' },
-                    { 
-                      name: '🩹 Heridas finales', 
-                      value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                      inline: false 
-                    }
-                  )
-                  .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
-                
-                await i.editReply({ embeds: [finalEmbed], components: [] });
-                collector.stop();
-                return;
-              }
-              
-              // Si el combate no ha terminado, determinar quién tiene el próximo turno
-              const nextPlayer = result.combat.currentCharacterId === attackerChar!.id 
-                ? interaction.user 
-                : targetUser;
-              
-              // Actualizar caracteres
-              attackerChar = await Character.findByPk(attackerChar!.id);
-              defenderChar = await Character.findByPk(defenderChar!.id);
-              
-              // Obtener las partes del cuerpo para cada personaje
-              const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-              const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-              
-              const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
-              const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
-              
-              const updatedEmbed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
-                .setDescription(result.actionResult.description)
-                .addFields(
-                  { 
-                    name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                    value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                    inline: true 
-                  },
-                  { 
-                    name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                    value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                    inline: true 
-                  },
-                  { name: '\u200B', value: '\u200B' },
-                  { 
-                    name: '🩹 Heridas', 
-                    value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                    inline: false 
-                  },
-                  { name: '⏱️ Turno de', value: `${nextPlayer.displayName || nextPlayer.username}`, inline: false }
-                )
-                .setFooter({ text: `Combate #${result.combat.id} - Ronda ${result.combat.roundCount}` });
-                
-                // Actualizar el embed original para futuros usos
-                embed = updatedEmbed;
-
-                await i.editReply({ 
-                  content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${nextPlayer.displayName || nextPlayer.username}**`,
-                  embeds: [updatedEmbed], 
-                  components: [actionRow] 
-                });
-            } catch (error) {
-              console.error('Error al procesar ataque:', error);
-              await i.reply({ content: 'Ocurrió un error al procesar tu ataque', ephemeral: true });
-            }
-            return;
-          }
-          
-          // Manejar otros tipos de acciones (defender, recuperar)
-          const currentCharId = i.user.id === interaction.user.id ? attackerChar!.id : defenderChar!.id;
-          const result = await combatService.processTurn(
-            Number(combatId),
-            currentCharId,
-            action as 'defend' | 'recover'
+        if (!attackerChar) {
+          attackerChar = await duelistService.generateRandomDuelist(
+            interaction.user.id,
+            interaction.user.username
           );
+        }
+
+        let defenderChar = await Duelist.findOne({
+          where: { userId: targetUser.id },
+          transaction
+        });
+
+        if (!defenderChar) {
+          defenderChar = await duelistService.generateRandomDuelist(
+            targetUser.id,
+            targetUser.username
+          );
+        }
+
+        // Verificar que ambos duelistas se obtuvieron correctamente
+        if (!attackerChar || !defenderChar) {
+          throw new Error('No se pudo obtener información de los duelistas');
+        }
+
+        return { attacker: attackerChar, defender: defenderChar };
+      },
+      
+      // 2. Verificar estado de los personajes
+      characterStatuses: async (transaction, { duelists }) => {
+        const attackerStatus = canEngageInCombat(duelists.attacker);
+        const defenderStatus = canEngageInCombat(duelists.defender);
+        
+        return { attacker: attackerStatus, defender: defenderStatus };
+      },
+      
+      // 3. Obtener partes del cuerpo para ambos personajes
+      bodyParts: async (transaction, { duelists }) => {
+        const [attackerParts, defenderParts] = await Promise.all([
+          BodyPart.findAll({ 
+            where: { duelistId: duelists.attacker.id },
+            transaction
+          }),
+          BodyPart.findAll({ 
+            where: { duelistId: duelists.defender.id },
+            transaction
+          })
+        ]);
+        
+        return { attacker: attackerParts, defender: defenderParts };
+      },
+      
+      // 4. Iniciar combate
+      combat: async (transaction, { duelists }) => {
+        return await combatService.startCombate(
+          duelists.attacker.id, 
+          duelists.defender.id
+        );
+      }
+    }, "Inicialización de duelo entre personajes");
+    
+    // Verificar si algún personaje no puede combatir
+    if (!duelData.characterStatuses.attacker.canEngage) {
+      await interaction.editReply(
+        `❌ **Error:** No puedes iniciar un combate porque tu personaje ${duelData.characterStatuses.attacker.reason}. ${duelData.characterStatuses.attacker.reason !== 'ha muerto permanentemente' ? 'Debes recuperarte primero.' : ''}`
+      );
+      return;
+    }
+
+    if (!duelData.characterStatuses.defender.canEngage) {
+      await interaction.editReply(
+        `❌ **Error:** No puedes desafiar a ${targetUser.username} porque su personaje ${duelData.characterStatuses.defender.reason}.`
+      );
+      return;
+    }
+    
+    // Formatear datos para la interfaz
+    const attackerBodyPartsText = formatBodyPartsHealth(duelData.bodyParts.attacker);
+    const defenderBodyPartsText = formatBodyPartsHealth(duelData.bodyParts.defender);
+    
+    // Determinar quién comienza
+    const firstPlayer = duelData.combat.currentDuelistId === duelData.duelists.attacker.id 
+      ? interaction.user 
+      : targetUser;
+    
+    // Crear embed para mostrar la información del combate
+    let embed = new EmbedBuilder()
+      .setColor(0xFF0000)
+      .setTitle(`⚔️ ¡Combate iniciado! ⚔️`)
+      .setDescription(`${interaction.user} ha desafiado a ${targetUser} a un duelo.`)
+      .addFields(
+        { 
+          name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+          value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
+          inline: true 
+        },
+        { 
+          name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+          value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
+          inline: true 
+        },
+        { name: '\u200B', value: '\u200B' },
+        { 
+          name: '🩹 Heridas', 
+          value: `**${duelData.duelists.attacker.name}**: ${attackerBodyPartsText}\n**${duelData.duelists.defender.name}**: ${defenderBodyPartsText}`,
+          inline: false 
+        },
+        { name: '⏱️ Turno de', value: `${firstPlayer.displayName || firstPlayer.username}`, inline: false }
+      )
+      .setFooter({ text: `Combate #${duelData.combat.id} - Ronda ${duelData.combat.roundCount}` });
+    
+    // Crear botones para acciones
+    const attackButton = new ButtonBuilder()
+      .setCustomId(`attack_${duelData.combat.id}`)
+      .setLabel('Atacar')
+      .setStyle(ButtonStyle.Danger);
+      
+    const defendButton = new ButtonBuilder()
+      .setCustomId(`defend_${duelData.combat.id}`)
+      .setLabel('Defender')
+      .setStyle(ButtonStyle.Primary);
+      
+    const recoverButton = new ButtonBuilder()
+      .setCustomId(`recover_${duelData.combat.id}`)
+      .setLabel('Recuperarse')
+      .setStyle(ButtonStyle.Success);
+      
+    const surrenderButton = new ButtonBuilder()
+      .setCustomId(`surrender_${duelData.combat.id}`)
+      .setLabel('Rendirse')
+      .setStyle(ButtonStyle.Secondary);
+
+    const actionRow = new ActionRowBuilder<ButtonBuilder>()
+      .addComponents(attackButton, defendButton, recoverButton, surrenderButton);
+
+    // Enviar mensaje con información del combate y botones de acción
+    const response = await interaction.editReply({
+      content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${firstPlayer.displayName || firstPlayer.username}**`,
+      embeds: [embed],
+      components: [actionRow],
+      files: [
+        {
+          attachment: interaction.user.displayAvatarURL({ size: 128 }),
+          name: 'attacker.png',
+        },
+        {
+          attachment: targetUser.displayAvatarURL({ size: 128 }),
+          name: 'defender.png',
+        },
+      ],
+    });
+    
+    // Configurar colector de interacciones para los botones
+    const collector = response.createMessageComponentCollector({ 
+      componentType: ComponentType.Button, 
+      time: 10 * 60 * 1000 // 10 minutos
+    });
+    
+    collector.on('collect', async (i) => {
+      try {
+        // Obtener la instancia más reciente del combate desde la base de datos
+        const updatedCombat = await Combat.findByPk(duelData.combat.id);
+        if (!updatedCombat || !updatedCombat.isActive) {
+          await i.reply({ 
+            content: 'Este combate ya ha terminado o no existe', 
+            ephemeral: true 
+          });
+          collector.stop();
+          return;
+        }
+        
+        // Actualizar la referencia local
+        Object.assign(duelData.combat, updatedCombat);
+        
+        // Verificar si es el turno del usuario que hizo clic
+        const currentTurnUserId = duelData.combat.currentDuelistId === duelData.duelists.attacker.id 
+          ? interaction.user.id 
+          : targetUser.id;
           
-          // Verificar si el combate ha terminado
-          if (result.message) {
-            // Actualizar caracteres
-            attackerChar = await Character.findByPk(attackerChar!.id);
-            defenderChar = await Character.findByPk(defenderChar!.id);
-            
-            // Obtener las partes del cuerpo para la información final
-            const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-            const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-            
-            const finalEmbed = new EmbedBuilder()
-              .setColor(0x00FF00)
-              .setTitle('¡Combate finalizado!')
-              .setDescription(result.message)
-              .addFields(
-                { 
-                  name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                  inline: true 
-                },
-                { 
-                  name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                  inline: true 
-                },
-                { name: '\u200B', value: '\u200B' },
-                { 
-                  name: '🩹 Heridas finales', 
-                  value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                  inline: false 
-                }
-              )
-              .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
-              
-            await i.update({ embeds: [finalEmbed], components: [] });
-            collector.stop();
-            return;
-          }
+        if (i.user.id !== currentTurnUserId) {
+          await i.reply({ 
+            content: `¡No es tu turno! Es el turno de ${currentTurnUserId === interaction.user.id ? interaction.user.username : targetUser.username}`, 
+            ephemeral: true 
+          });
+          return;
+        }
+        
+        // Extraer acción y ID del combate para botones principales
+        const [action, combatId] = i.customId.split('_');
+        
+        if (action === 'surrender') {
+          // Manejar rendición
+          const currentCharId = i.user.id === interaction.user.id ? duelData.duelists.attacker.id : duelData.duelists.defender.id;
+          const result = await combatService.abandonCombat(Number(combatId), currentCharId);
           
-          // Línea 317: Agregamos un log para ver lo que está pasando
-          console.log(`ID actualCharacterId: ${result.combat.currentCharacterId}, attackerChar ID: ${attackerChar!.id}, defenderChar ID: ${defenderChar!.id}`);
-          
-          // Verificar directamente qué personaje tiene el turno ahora
-          const nextPlayer = result.combat.currentCharacterId === attackerChar!.id 
-            ? interaction.user 
-            : targetUser;
-            
           // Actualizar caracteres
-          attackerChar = await Character.findByPk(attackerChar!.id);
-          defenderChar = await Character.findByPk(defenderChar!.id);
+          duelData.duelists.attacker = await Duelist.findByPk(duelData.duelists.attacker.id);
+          duelData.duelists.defender = await Duelist.findByPk(duelData.duelists.defender.id);
           
           // Obtener las partes del cuerpo para cada personaje
-          const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-          const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+          duelData.bodyParts.attacker = await BodyPart.findAll({ where: { duelistId: duelData.duelists.attacker.id } });
+          duelData.bodyParts.defender = await BodyPart.findAll({ where: { duelistId: duelData.duelists.defender.id } });
           
-          const attackerBodyPartsText = formatBodyPartsHealth(attackerBodyParts);
-          const defenderBodyPartsText = formatBodyPartsHealth(defenderBodyParts);
-          
-          const updatedEmbed = new EmbedBuilder()
-            .setColor(0xFF0000)
-            .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
-            .setDescription(result.actionResult.description)
+          // Actualizar mensaje con resultado final
+          const finalEmbed = new EmbedBuilder()
+            .setColor(0x00FF00)
+            .setTitle('¡Combate finalizado!')
+            .setDescription(result.message)
             .addFields(
               { 
-                name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
+                name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
                 inline: true 
               },
               { 
-                name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
+                name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
                 inline: true 
               },
               { name: '\u200B', value: '\u200B' },
               { 
-                name: '🩹 Heridas', 
-                value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
+                name: '🩹 Heridas finales', 
+                value: `**${duelData.duelists.attacker.name}**: ${formatBodyPartsHealth(duelData.bodyParts.attacker)}\n**${duelData.duelists.defender.name}**: ${formatBodyPartsHealth(duelData.bodyParts.defender)}`,
                 inline: false 
-              },
-              { name: '⏱️ Turno de', value: `${nextPlayer.displayName || nextPlayer.username}`, inline: false }
+              }
             )
-            .setFooter({ text: `Combate #${result.combat.id} - Ronda ${result.combat.roundCount}` });
+            .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
             
-            // Actualizar el embed original para futuros usos
-            embed = updatedEmbed;
-
-            await i.update({ 
-              embeds: [updatedEmbed], 
-              content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${nextPlayer.displayName || nextPlayer.username}**`,
-              components: [actionRow] 
-            });
-        } catch (error) {
-          console.error('Error en interacción de botón:', error);
-          if (!i.replied && !i.deferred) {
-            await i.reply({ content: 'Ocurrió un error al procesar tu acción', ephemeral: true });
-          }
+          await i.update({ embeds: [finalEmbed], components: [] });
+          collector.stop();
+          return;
         }
-      });
-      
-      collector.on('end', async () => {
-        try {
-          // Verificar el estado actual del combate en la base de datos
-          const updatedCombat = await Combat.findByPk(combat.id);
+        
+        if (action === 'attack') {
+          // Elegir una parte del cuerpo al azar
+          const randomBodyPart = BODY_PARTS[Math.floor(Math.random() * BODY_PARTS.length)];
+          const currentCharId = i.user.id === interaction.user.id ? duelData.duelists.attacker.id : duelData.duelists.defender.id;
           
-          // Si el combate ya no existe o ya estaba finalizado, no hacemos nada
-          if (!updatedCombat) {
-            return;
-          }
-          
-          // Actualizar caracteres para tener la información más reciente
-          attackerChar = await Character.findByPk(attackerChar!.id);
-          defenderChar = await Character.findByPk(defenderChar!.id);
-          
-          // Obtener las partes del cuerpo actualizadas
-          const attackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-          const defenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
-          
-          // Si el combate ya no está activo, obtener la razón real de finalización
-          if (!updatedCombat.isActive) {
-            // Obtener el último mensaje del log de combate para saber cómo terminó
-            const combatLog = updatedCombat.combatLog;
-            const lastMessage = combatLog[combatLog.length - 1] || '';
-            
-            // Crear embed con la información real
-            const finalEmbed = new EmbedBuilder()
-              .setColor(0x00FF00)
-              .setTitle('¡Combate finalizado!')
-              .setDescription(lastMessage)
-              .addFields(
-                { 
-                  name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                  inline: true 
-                },
-                { 
-                  name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                  inline: true 
-                },
-                { name: '\u200B', value: '\u200B' },
-                { 
-                  name: '🩹 Heridas finales', 
-                  value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                  inline: false 
-                }
-              )
-              .setFooter({ text: `Combate #${updatedCombat.id} - ${updatedCombat.roundCount} rondas` });
-              
-            await interaction.editReply({ embeds: [finalEmbed], components: [] });
-          } else {
-            // Si el combate sigue activo pero el colector expiró, se abandonó por inactividad
-            // Marcar el combate como inactivo en la base de datos
-            updatedCombat.isActive = false;
-            updatedCombat.combatLog = [
-              ...updatedCombat.combatLog,
-              'El combate ha sido abandonado por inactividad.'
-            ];
-            await updatedCombat.save();
-            
-            // Actualizar mensaje con información de abandono
-            const timeoutEmbed = new EmbedBuilder()
-              .setColor(0x808080)
-              .setTitle('¡Combate abandonado!')
-              .setDescription('El combate ha sido abandonado por inactividad.')
-              .addFields(
-                { 
-                  name: `${attackerChar!.name} [${attackerChar!.race}]`, 
-                  value: formatCharacterStatus(attackerChar!, attackerBodyParts), 
-                  inline: true 
-                },
-                { 
-                  name: `${defenderChar!.name} [${defenderChar!.race}]`, 
-                  value: formatCharacterStatus(defenderChar!, defenderBodyParts), 
-                  inline: true 
-                },
-                { name: '\u200B', value: '\u200B' },
-                { 
-                  name: '🩹 Heridas finales', 
-                  value: `**${attackerChar!.name}**: ${formatBodyPartsHealth(attackerBodyParts)}\n**${defenderChar!.name}**: ${formatBodyPartsHealth(defenderBodyParts)}`,
-                  inline: false 
-                }
-              )
-              .setFooter({ text: `Combate #${updatedCombat.id} - ${updatedCombat.roundCount} rondas` });
-              
-            await interaction.editReply({ embeds: [timeoutEmbed], components: [] });
-          }
-        } catch (error) {
-          console.error('Error al finalizar combate:', error);
           try {
-            // Intentar obtener datos actualizados para el mensaje de error
-            const latestAttackerChar = await Character.findByPk(attackerChar!.id);
-            const latestDefenderChar = await Character.findByPk(defenderChar!.id);
-            const latestAttackerBodyParts = await BodyPart.findAll({ where: { characterId: attackerChar!.id } });
-            const latestDefenderBodyParts = await BodyPart.findAll({ where: { characterId: defenderChar!.id } });
+            // Mostrar mensaje de qué parte se está atacando
+            await i.update({ 
+              content: `**Atacando aleatoriamente la ${randomBodyPart}...**`,
+              components: [] 
+            });
             
-            // En caso de error, mostrar mensaje genérico
-            const errorEmbed = new EmbedBuilder()
-              .setColor(0x808080)
-              .setTitle('¡Combate finalizado!')
-              .setDescription('El combate ha finalizado.')
+            const result = await combatService.processTurn(
+              Number(combatId),
+              currentCharId,
+              'attack',
+              randomBodyPart
+            );
+            
+            // Verificar si el combate ha terminado
+            if (result.message) {
+              // Actualizar caracteres
+              duelData.duelists.attacker = await Duelist.findByPk(duelData.duelists.attacker.id);
+              duelData.duelists.defender = await Duelist.findByPk(duelData.duelists.defender.id);
+              
+              // Obtener las partes del cuerpo para la información final
+              duelData.bodyParts.attacker = await BodyPart.findAll({ where: { duelistId: duelData.duelists.attacker.id } });
+              duelData.bodyParts.defender = await BodyPart.findAll({ where: { duelistId: duelData.duelists.defender.id } });
+              
+              // Crear el embed final del combate
+              const finalEmbed = new EmbedBuilder()
+                .setColor(0x00FF00)
+                .setTitle('¡Combate finalizado!')
+                .setDescription(result.message)
+                .addFields(
+                  { 
+                    name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+                    value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
+                    inline: true 
+                  },
+                  { 
+                    name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+                    value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
+                    inline: true 
+                  },
+                  { name: '\u200B', value: '\u200B' },
+                  { 
+                    name: '🩹 Heridas finales', 
+                    value: `**${duelData.duelists.attacker.name}**: ${formatBodyPartsHealth(duelData.bodyParts.attacker)}\n**${duelData.duelists.defender.name}**: ${formatBodyPartsHealth(duelData.bodyParts.defender)}`,
+                    inline: false 
+                  }
+                )
+                .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
+              
+              await i.editReply({ embeds: [finalEmbed], components: [] });
+              collector.stop();
+              return;
+            }
+            
+            // Si el combate no ha terminado, determinar quién tiene el próximo turno
+            const nextPlayer = result.combat.currentDuelistId === duelData.duelists.attacker.id 
+              ? interaction.user 
+              : targetUser;
+            
+            // Actualizar caracteres
+            duelData.duelists.attacker = await Duelist.findByPk(duelData.duelists.attacker.id);
+            duelData.duelists.defender = await Duelist.findByPk(duelData.duelists.defender.id);
+            
+            // Obtener las partes del cuerpo para cada personaje
+            duelData.bodyParts.attacker = await BodyPart.findAll({ where: { duelistId: duelData.duelists.attacker.id } });
+            duelData.bodyParts.defender = await BodyPart.findAll({ where: { duelistId: duelData.duelists.defender.id } });
+            
+            const attackerBodyPartsText = formatBodyPartsHealth(duelData.bodyParts.attacker);
+            const defenderBodyPartsText = formatBodyPartsHealth(duelData.bodyParts.defender);
+            
+            const updatedEmbed = new EmbedBuilder()
+              .setColor(0xFF0000)
+              .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
+              .setDescription(result.actionResult && result.actionResult.description ? result.actionResult.description : 'Resultado del combate')
               .addFields(
                 { 
-                  name: `${latestAttackerChar!.name} [${latestAttackerChar!.race}]`, 
-                  value: formatCharacterStatus(latestAttackerChar!, latestAttackerBodyParts), 
+                  name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+                  value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
                   inline: true 
                 },
                 { 
-                  name: `${latestDefenderChar!.name} [${latestDefenderChar!.race}]`, 
-                  value: formatCharacterStatus(latestDefenderChar!, latestDefenderBodyParts), 
+                  name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+                  value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
                   inline: true 
                 },
                 { name: '\u200B', value: '\u200B' },
                 { 
-                  name: '🩹 Heridas finales', 
-                  value: `**${latestAttackerChar!.name}**: ${formatBodyPartsHealth(latestAttackerBodyParts)}\n**${latestDefenderChar!.name}**: ${formatBodyPartsHealth(latestDefenderBodyParts)}`,
+                  name: '🩹 Heridas', 
+                  value: `**${duelData.duelists.attacker.name}**: ${attackerBodyPartsText}\n**${duelData.duelists.defender.name}**: ${defenderBodyPartsText}`,
                   inline: false 
-                }
+                },
+                { name: '⏱️ Turno de', value: `${nextPlayer.displayName || nextPlayer.username}`, inline: false }
               )
-              .setFooter({ text: `Combate finalizado` });
+              .setFooter({ text: `Combate #${result.combat.id} - Ronda ${result.combat.roundCount}` });
               
-            await interaction.editReply({ embeds: [errorEmbed], components: [] });
-          } catch (finalError) {
-            // Si falla todo, mostrar un mensaje muy simple
-            console.error('Error crítico al crear embed de error:', finalError);
-            await interaction.editReply('El combate ha finalizado debido a un error.');
+              // Actualizar el embed original para futuros usos
+              embed = updatedEmbed;
+
+              await i.editReply({ 
+                content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${nextPlayer.displayName || nextPlayer.username}**`,
+                embeds: [updatedEmbed], 
+                components: [actionRow] 
+              });
+          } catch (error) {
+            console.error('Error al procesar ataque:', error);
+            await i.reply({ content: 'Ocurrió un error al procesar tu ataque', ephemeral: true });
           }
+          return;
         }
-      });
-    } catch (dbError) {
-      console.error('Error de base de datos:', dbError);
-      await interaction.editReply(
-        'Error al acceder a la base de datos. Por favor, inténtalo de nuevo.'
-      );
-    }
+        
+        // Manejar otros tipos de acciones (defender, recuperar)
+        const currentCharId = i.user.id === interaction.user.id ? duelData.duelists.attacker.id : duelData.duelists.defender.id;
+        const result = await combatService.processTurn(
+          Number(combatId),
+          currentCharId,
+          action as 'defend' | 'recover'
+        );
+        
+        // Verificar si el combate ha terminado
+        if (result.message) {
+          // Actualizar caracteres
+          duelData.duelists.attacker = await Duelist.findByPk(duelData.duelists.attacker.id);
+          duelData.duelists.defender = await Duelist.findByPk(duelData.duelists.defender.id);
+          
+          // Obtener las partes del cuerpo para la información final
+          duelData.bodyParts.attacker = await BodyPart.findAll({ where: { duelistId: duelData.duelists.attacker.id } });
+          duelData.bodyParts.defender = await BodyPart.findAll({ where: { duelistId: duelData.duelists.defender.id } });
+          
+          const finalEmbed = new EmbedBuilder()
+            .setColor(0x00FF00)
+            .setTitle('¡Combate finalizado!')
+            .setDescription(result.message)
+            .addFields(
+              { 
+                name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
+                inline: true 
+              },
+              { 
+                name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
+                inline: true 
+              },
+              { name: '\u200B', value: '\u200B' },
+              { 
+                name: '🩹 Heridas finales', 
+                value: `**${duelData.duelists.attacker.name}**: ${formatBodyPartsHealth(duelData.bodyParts.attacker)}\n**${duelData.duelists.defender.name}**: ${formatBodyPartsHealth(duelData.bodyParts.defender)}`,
+                inline: false 
+              }
+            )
+            .setFooter({ text: `Combate #${result.combat.id} - ${result.combat.roundCount} rondas` });
+            
+          await i.update({ embeds: [finalEmbed], components: [] });
+          collector.stop();
+          return;
+        }
+        
+        // Línea 317: Agregamos un log para ver lo que está pasando
+        console.log(`ID currentDuelistId: ${result.combat.currentDuelistId}, attackerChar ID: ${duelData.duelists.attacker.id}, defenderChar ID: ${duelData.duelists.defender.id}`);
+        
+        // Verificar directamente qué personaje tiene el turno ahora
+        const nextPlayer = result.combat.currentDuelistId === duelData.duelists.attacker.id 
+          ? interaction.user 
+          : targetUser;
+          
+        // Actualizar caracteres
+        duelData.duelists.attacker = await Duelist.findByPk(duelData.duelists.attacker.id);
+        duelData.duelists.defender = await Duelist.findByPk(duelData.duelists.defender.id);
+        
+        // Obtener las partes del cuerpo para cada personaje
+        duelData.bodyParts.attacker = await BodyPart.findAll({ where: { duelistId: duelData.duelists.attacker.id } });
+        duelData.bodyParts.defender = await BodyPart.findAll({ where: { duelistId: duelData.duelists.defender.id } });
+        
+        const attackerBodyPartsText = formatBodyPartsHealth(duelData.bodyParts.attacker);
+        const defenderBodyPartsText = formatBodyPartsHealth(duelData.bodyParts.defender);
+        
+        const updatedEmbed = new EmbedBuilder()
+          .setColor(0xFF0000)
+          .setTitle(`⚔️ ¡Combate en progreso! ⚔️`)
+          .setDescription(result.actionResult && result.actionResult.description ? result.actionResult.description : 'Resultado del combate')
+          .addFields(
+            { 
+              name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+              value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
+              inline: true 
+            },
+            { 
+              name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+              value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
+              inline: true 
+            },
+            { name: '\u200B', value: '\u200B' },
+            { 
+              name: '🩹 Heridas', 
+              value: `**${duelData.duelists.attacker.name}**: ${attackerBodyPartsText}\n**${duelData.duelists.defender.name}**: ${defenderBodyPartsText}`,
+              inline: false 
+            },
+            { name: '⏱️ Turno de', value: `${nextPlayer.displayName || nextPlayer.username}`, inline: false }
+          )
+          .setFooter({ text: `Combate #${result.combat.id} - Ronda ${result.combat.roundCount}` });
+          
+          // Actualizar el embed original para futuros usos
+          embed = updatedEmbed;
+
+          await i.update({ 
+            embeds: [updatedEmbed], 
+            content: `# ${interaction.user.displayName} ⚔️ ${targetUser.displayName}\n**Turno actual: ${nextPlayer.displayName || nextPlayer.username}**`,
+            components: [actionRow] 
+          });
+      } catch (error) {
+        console.error('Error en interacción de botón:', error);
+        if (!i.replied && !i.deferred) {
+          await i.reply({ content: 'Ocurrió un error al procesar tu acción', ephemeral: true });
+        }
+      }
+    });
+    
+    collector.on('end', async () => {
+      try {
+        // Verificar el estado actual del combate en la base de datos
+        const updatedCombat = await Combat.findByPk(duelData.combat.id);
+        
+        // Si el combate ya no existe o ya estaba finalizado, no hacemos nada
+        if (!updatedCombat) {
+          return;
+        }
+        
+        // Actualizar caracteres para tener la información más reciente
+        duelData.duelists.attacker = await Duelist.findByPk(duelData.duelists.attacker.id);
+        duelData.duelists.defender = await Duelist.findByPk(duelData.duelists.defender.id);
+        
+        // Obtener las partes del cuerpo actualizadas
+        duelData.bodyParts.attacker = await BodyPart.findAll({ where: { duelistId: duelData.duelists.attacker.id } });
+        duelData.bodyParts.defender = await BodyPart.findAll({ where: { duelistId: duelData.duelists.defender.id } });
+        
+        // Si el combate ya no está activo, obtener la razón real de finalización
+        if (!updatedCombat.isActive) {
+          // Obtener el último mensaje del log de combate para saber cómo terminó
+          const combatLog = updatedCombat.combatLog;
+          const lastMessage = combatLog[combatLog.length - 1] || '';
+          
+          // Crear embed con la información real
+          const finalEmbed = new EmbedBuilder()
+            .setColor(0x00FF00)
+            .setTitle('¡Combate finalizado!')
+            .setDescription(lastMessage)
+            .addFields(
+              { 
+                name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
+                inline: true 
+              },
+              { 
+                name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
+                inline: true 
+              },
+              { name: '\u200B', value: '\u200B' },
+              { 
+                name: '🩹 Heridas finales', 
+                value: `**${duelData.duelists.attacker.name}**: ${formatBodyPartsHealth(duelData.bodyParts.attacker)}\n**${duelData.duelists.defender.name}**: ${formatBodyPartsHealth(duelData.bodyParts.defender)}`,
+                inline: false 
+              }
+            )
+            .setFooter({ text: `Combate #${updatedCombat.id} - ${updatedCombat.roundCount} rondas` });
+            
+          await interaction.editReply({ embeds: [finalEmbed], components: [] });
+        } else {
+          // Si el combate sigue activo pero el colector expiró, se abandonó por inactividad
+          // Marcar el combate como inactivo en la base de datos
+          updatedCombat.isActive = false;
+          updatedCombat.combatLog = [
+            ...updatedCombat.combatLog,
+            'El combate ha sido abandonado por inactividad.'
+          ];
+          await updatedCombat.save();
+          
+          // Actualizar mensaje con información de abandono
+          const timeoutEmbed = new EmbedBuilder()
+            .setColor(0x808080)
+            .setTitle('¡Combate abandonado!')
+            .setDescription('El combate ha sido abandonado por inactividad.')
+            .addFields(
+              { 
+                name: `${duelData.duelists.attacker.name} [${duelData.duelists.attacker.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.attacker, duelData.bodyParts.attacker), 
+                inline: true 
+              },
+              { 
+                name: `${duelData.duelists.defender.name} [${duelData.duelists.defender.race}]`, 
+                value: formatDuelistStatus(duelData.duelists.defender, duelData.bodyParts.defender), 
+                inline: true 
+              },
+              { name: '\u200B', value: '\u200B' },
+              { 
+                name: '🩹 Heridas finales', 
+                value: `**${duelData.duelists.attacker.name}**: ${formatBodyPartsHealth(duelData.bodyParts.attacker)}\n**${duelData.duelists.defender.name}**: ${formatBodyPartsHealth(duelData.bodyParts.defender)}`,
+                inline: false 
+              }
+            )
+            .setFooter({ text: `Combate #${updatedCombat.id} - ${updatedCombat.roundCount} rondas` });
+            
+          await interaction.editReply({ embeds: [timeoutEmbed], components: [] });
+        }
+      } catch (error) {
+        console.error('Error al finalizar combate:', error);
+        try {
+          // Intentar obtener datos actualizados para el mensaje de error
+          const latestAttackerChar = await Duelist.findByPk(duelData.duelists.attacker.id);
+          const latestDefenderChar = await Duelist.findByPk(duelData.duelists.defender.id);
+          const latestAttackerBodyParts = await BodyPart.findAll({ where: { duelistId: duelData.duelists.attacker.id } });
+          const latestDefenderBodyParts = await BodyPart.findAll({ where: { duelistId: duelData.duelists.defender.id } });
+          
+          // En caso de error, mostrar mensaje genérico
+          const errorEmbed = new EmbedBuilder()
+            .setColor(0x808080)
+            .setTitle('¡Combate finalizado!')
+            .setDescription('El combate ha finalizado.')
+            .addFields(
+              { 
+                name: `${latestAttackerChar!.name} [${latestAttackerChar!.race}]`, 
+                value: formatDuelistStatus(latestAttackerChar!, latestAttackerBodyParts), 
+                inline: true 
+              },
+              { 
+                name: `${latestDefenderChar!.name} [${latestDefenderChar!.race}]`, 
+                value: formatDuelistStatus(latestDefenderChar!, latestDefenderBodyParts), 
+                inline: true 
+              },
+              { name: '\u200B', value: '\u200B' },
+              { 
+                name: '🩹 Heridas finales', 
+                value: `**${latestAttackerChar!.name}**: ${formatBodyPartsHealth(latestAttackerBodyParts)}\n**${latestDefenderChar!.name}**: ${formatBodyPartsHealth(latestDefenderBodyParts)}`,
+                inline: false 
+              }
+            )
+            .setFooter({ text: `Combate finalizado` });
+            
+          await interaction.editReply({ embeds: [errorEmbed], components: [] });
+        } catch (finalError) {
+          // Si falla todo, mostrar un mensaje muy simple
+          console.error('Error crítico al crear embed de error:', finalError);
+          await interaction.editReply('El combate ha finalizado debido a un error.');
+        }
+      }
+    });
   } catch (error) {
     console.error('Error en comando duel:', error);
     await interaction.editReply('Ocurrió un error al ejecutar el duelo');

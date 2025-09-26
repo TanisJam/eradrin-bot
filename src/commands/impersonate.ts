@@ -77,7 +77,7 @@ export async function execute(interaction: CommandInteraction) {
     }
 
     // Verificar que el usuario tiene el rol requerido
-    const allowedRoles = ['1200117154742276106', '1063664599313961011'];
+    const allowedRoles = ['1200117154742276106', '1063664599313961011', '1250667311292219446'];
     
     if (interaction.inGuild()) {
       const member = interaction.member as GuildMember;

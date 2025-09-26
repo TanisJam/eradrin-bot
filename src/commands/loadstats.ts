@@ -1,6 +1,6 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import axios from 'axios';
-import { CharacterSheet } from '../models/character-sheet';
+import { CharacterSheet } from '../types/models/character-sheet';
 
 export const data = new SlashCommandBuilder()
   .setName('loadstats')

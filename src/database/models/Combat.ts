@@ -1,6 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config';
-import Character from './Character';
+import Duelist from './Duelist';
 
 class Combat extends Model {
   declare id: number;
@@ -8,7 +8,7 @@ class Combat extends Model {
   declare defenderId: number;
   declare isActive: boolean;
   declare currentTurn: number;
-  declare currentCharacterId: number;
+  declare currentDuelistId: number;
   declare roundCount: number;
   declare lastActionTimestamp: Date;
   declare combatLog: string[];
@@ -25,7 +25,7 @@ Combat.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: Character,
+        model: Duelist,
         key: 'id',
       },
     },
@@ -33,7 +33,7 @@ Combat.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: Character,
+        model: Duelist,
         key: 'id',
       },
     },
@@ -45,7 +45,7 @@ Combat.init(
       type: DataTypes.INTEGER,
       defaultValue: 1,
     },
-    currentCharacterId: {
+    currentDuelistId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
