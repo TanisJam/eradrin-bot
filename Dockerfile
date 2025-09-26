@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 
 # Instalar pnpm y dependencias necesarias para compilar sqlite3
 RUN apk add --no-cache python3 make g++ gcc musl-dev \
-    && npm install -g pnpm
+    && npm install -g pnpm typescript
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN pnpm install --frozen-lockfile \
 
 # Copy source files and build
 COPY . .
-RUN pnpm run build
+RUN pnpm run build && ls -la dist/ && echo "Build completed successfully"
 
 # Production stage
 FROM node:20-alpine
@@ -33,6 +33,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 # Copy database file
 COPY --from=builder /app/database.sqlite ./database.sqlite
+
+# Verify files were copied correctly
+RUN ls -la dist/ && echo "Files copied successfully"
 
 # Command to run the application
 CMD ["node", "dist/index.js"]
