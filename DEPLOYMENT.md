@@ -221,8 +221,8 @@ docker rm -f eradrin-bot
 | Variable | Required | Description | Example |
 |----------|----------|-------------|---------|
 | `CLIENT_ID` | ✅ Yes | Discord Application Client ID | `123456789012345678` |
-| `TOKEN` | ✅ Yes | Discord Bot Token | `MTIzNDU2Nzg5MDEyMzQ1Njc4.GhIjKl.MnOpQrStUvWxYzAbCdEfGhIjKlMnOpQrSt` |
-| `GUILD_ID` | ✅ Yes | Discord Server (Guild) ID | `987654321098765432` |
+| `TOKEN` | ✅ Yes | Discord Bot Token | `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` |
+| `GUILD_ID` | ✅ Yes | Discord Server (Guild) ID | `123456789012345678` |
 | `GEMINI_API_KEY` | ✅ Yes | Google Gemini API Key | `AIzaSyA...` |
 | `NODE_ENV` | ❌ No | Node environment | `production` |
 
