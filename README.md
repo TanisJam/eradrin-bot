@@ -37,13 +37,15 @@ src/
 ## Available Commands
 
 - `/ping`: Responds with "Pong" and shows usage statistics
-- `/ask`: Allows asking questions using AI
-- `/character`: Character management
-- `/roll`: Dice rolling
-- `/rollstats`: Rolling statistics
+- `/ask`: Allows asking questions using AI with RAG (Retrieval-Augmented Generation)
+- `/character`: Character management and search on Nivel20
+- `/roll`: Dice rolling using RPG Dice Roller
+- `/rollstats`: Rolling statistics for character creation
 - `/help`: Shows help for available commands
-- `/duel`: Start a turn-based combat with another user
+- `/bonk`: Turn-based combat system
+- `/impersonate`: Character impersonation with AI
 - `/summary`: Generates text summaries
+- `/rolreset`: Reset user roles
 
 ## Technologies Used
 
@@ -52,6 +54,8 @@ src/
 - **Discord.js**: Library to interact with Discord API
 - **Sequelize**: ORM for the database
 - **SQLite**: Local database
+- **Google Gemini AI**: AI model for chatbot and RAG functionality
+- **RPG Dice Roller**: Comprehensive dice rolling library
 
 ## Configuration and Development
 
@@ -232,7 +236,48 @@ GEMINI_API_KEY=123456789qwertyuiop
 
 ### `/rollstats`
 - **Description**: Generates stats for your next character (or sends you to point buy).
-   
+
+### `/bonk`
+- **Description**: Start a turn-based combat with another user.
+
+### `/impersonate`
+- **Description**: Impersonate a character using AI.
+
+### `/summary`
+- **Description**: Generate summaries of text or conversations.
+
+## 🧠 RAG (Retrieval-Augmented Generation)
+
+Eradrin Bot uses RAG to enhance AI responses with custom knowledge:
+
+### Setting Up Knowledge Base
+
+1. Add text files to `knowledge/` directory organized by category:
+```
+knowledge/
+  ├── player-characters/
+  │   ├── character1.txt
+  │   └── character2.txt
+  └── stories/
+      └── campaign.txt
+```
+
+2. Ingest knowledge into the database:
+```bash
+# Process all knowledge files
+pnpm ingest-knowledge -- --mode=all
+
+# Process specific directory
+pnpm ingest-knowledge -- --mode=directory --directory=player-characters
+
+# Process single file
+pnpm ingest-knowledge -- --mode=file --file=player-characters/character1.txt
+```
+
+3. Ask questions using `/ask` - Eradrin will search the knowledge base for relevant context!
+
+For more details, see [README-RAG.md](./README-RAG.md).
+
 # 🎯 Upcoming Features
 
 I am planning to add the following features to enhance the D&D experience:
