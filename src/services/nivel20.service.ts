@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { load } from 'cheerio';
-import { Character } from '../types/Character';
-import { CharacterSheet } from '../types/models/character-sheet';
+import { Character, Nivel20 } from '../types';
 
 const BASE_URL = 'https://nivel20.com';
 const CAMPAIGN_URL = `${BASE_URL}/games/dnd-5/campaigns/76536-el-reposo-del-cuervo/characters`;
@@ -31,13 +30,13 @@ export class Nivel20Service {
     }
   }
 
-  async getCharacterStats(url: string): Promise<CharacterSheet | null> {
+  async getCharacterStats(url: string): Promise<Nivel20.CharacterSheet | null> {
     const URL = `${BASE_URL}${url}`;
     try {
       const response = await axios.get(`${URL}.json`);
       const characterData = response.data;
       
-      return new CharacterSheet(characterData, URL);
+      return new Nivel20.CharacterSheet(characterData, URL);
     } catch (error) {
       console.error('Error al cargar los stats del personaje', error);
       return null;

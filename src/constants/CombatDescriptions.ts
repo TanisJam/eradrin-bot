@@ -1,4 +1,4 @@
-import { AttackResult } from '../types/Combat.type';
+import { AttackResult } from '../types';
 import {
   ATTACK_VERBS,
   ADVERBS,

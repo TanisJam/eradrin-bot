@@ -4,29 +4,15 @@
  */
 
 // Command types
-export * from './Command';
+export * from './commands';
 
-// Combat types
-export * from './Combat.type';
+// Game-related types (Combat, Character, etc.)
+export * from './game';
 
-// Character types
-export * from './Character';
+// External API types
+export * from './external';
 
-// Models types - importados selectivamente para evitar conflictos
-import * as BaseTypes from './models/types';
-import * as CharacterSheet from './models/character-sheet';
-import * as Nivel20Types from './models/nivel20response';
-export * from './models/constants';
-
-// Re-exportar los tipos con nombres específicos para evitar conflictos
-export { 
-  BaseTypes,
-  CharacterSheet,
-  Nivel20Types
-};
-
-// Exportar tipos específicos que no tienen conflictos
-export type { 
-  SkillDefinition, 
-  AbilityScores
-} from './models/types'; 
+// Re-export commonly used types with specific names for convenience
+export type { Command } from './commands/Command';
+export type { Character, CharacterDetails } from './game/Character';
+export { AttackResult, BODY_PARTS } from './game/Combat';

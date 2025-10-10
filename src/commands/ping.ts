@@ -1,7 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import User from '../database/models/User';
 import PingHistory from '../database/models/PingHistory';
-import { Command } from '../types/Command';
+import { Command } from '../types';
 import { logger } from '../utils/logger';
 import { TransactionService } from '../services/Transaction.service';
 

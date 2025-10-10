@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from '
 import { DuelistService } from '../services/Duelist.service';
 import { CombatService } from '../services/Combat.service';
 import Duelist from '../database/models/Duelist';
-import { BODY_PARTS } from '../types/Combat.type';
+import { BODY_PARTS } from '../types';
 import BodyPart from '../database/models/BodyPart';
 import Combat from '../database/models/Combat';
 

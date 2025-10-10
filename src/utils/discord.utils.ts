@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { Character } from '../types/Character';
+import { Character } from '../types';
 
 export function createCharacterButtons(characters: Character[]): ActionRowBuilder<ButtonBuilder>[] {
   const buttons = characters.map((char, index) =>

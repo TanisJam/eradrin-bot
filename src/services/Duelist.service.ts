@@ -1,6 +1,6 @@
 import Duelist from '../database/models/Duelist';
 import BodyPart from '../database/models/BodyPart';
-import { AttackResult } from '../types/Combat.type';
+import { AttackResult } from '../types';
 import { generateCombatDescription } from '../constants/CombatDescriptions';
 import User from '../database/models/User';
 import { BaseService } from './BaseService';

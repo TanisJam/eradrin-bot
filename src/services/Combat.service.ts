@@ -2,7 +2,7 @@ import Combat from '../database/models/Combat';
 import Duelist from '../database/models/Duelist';
 import { DuelistService } from './Duelist.service';
 import { BaseService } from './BaseService';
-import { AttackResult } from '../types/Combat.type';
+import { AttackResult } from '../types';
 import { getAiModel } from '../ai-model';
 import { Op } from 'sequelize';
 import BodyPart from '../database/models/BodyPart';
