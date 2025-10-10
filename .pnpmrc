@@ -1,0 +1,8 @@
+# Allow lifecycle scripts for native modules
+enable-pre-post-scripts=true
+
+# Disable hoisting that might interfere with native builds
+shamefully-hoist=false
+
+# Allow scripts to run (security: only use in controlled environments)
+ignore-scripts=false
