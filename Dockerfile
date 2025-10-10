@@ -3,6 +3,9 @@
 # ================================
 FROM node:20-alpine AS deps
 
+# Install build dependencies for native modules (sqlite3)
+RUN apk add --no-cache python3 make g++
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -12,6 +15,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install ALL dependencies (needed for build)
+# Allow sqlite3 to run its build script
 RUN pnpm install --frozen-lockfile
 
 # ================================
@@ -38,6 +42,9 @@ RUN pnpm build
 # ================================
 FROM node:20-alpine AS runner
 
+# Install runtime dependencies for sqlite3
+RUN apk add --no-cache python3 make g++
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -50,6 +57,7 @@ ENV NODE_ENV=production
 COPY package.json pnpm-lock.yaml ./
 
 # Install ONLY production dependencies
+# Allow sqlite3 to rebuild for production
 RUN pnpm install --frozen-lockfile --prod
 
 # Copy compiled code from builder
