@@ -6,5 +6,4 @@ export * as rollstats from './rollstats';
 export * as help from './help';
 export * as rolreset from './rolreset';
 export * as summary from './summary';
-export * as bonk from './bonk';
 export * as impersonate from './impersonate';

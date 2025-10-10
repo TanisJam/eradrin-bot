@@ -42,7 +42,6 @@ src/
 - `/roll`: Dice rolling using RPG Dice Roller
 - `/rollstats`: Rolling statistics for character creation
 - `/help`: Shows help for available commands
-- `/bonk`: Turn-based combat system
 - `/impersonate`: Character impersonation with AI
 - `/summary`: Generates text summaries
 - `/rolreset`: Reset user roles
@@ -236,9 +235,6 @@ GEMINI_API_KEY=123456789qwertyuiop
 
 ### `/rollstats`
 - **Description**: Generates stats for your next character (or sends you to point buy).
-
-### `/bonk`
-- **Description**: Start a turn-based combat with another user.
 
 ### `/impersonate`
 - **Description**: Impersonate a character using AI.

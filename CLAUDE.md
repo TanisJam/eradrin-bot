@@ -73,7 +73,6 @@ The bot follows a layered MVC-style architecture:
 
 - **Services Layer** (`src/services/`): Business logic isolated from Discord interactions. All services extend `BaseService` for consistent logging. Key services:
   - `RAGService`: Implements semantic search over knowledge base using embeddings
-  - `Combat.service` / `Duelist.service`: Combat system management
   - `Nivel20.service`: Integration with Nivel20 character sheets
   - `Transaction.service`: Database transaction management
 

@@ -15,4 +15,3 @@ export * from './external';
 // Re-export commonly used types with specific names for convenience
 export type { Command } from './commands/Command';
 export type { Character, CharacterDetails } from './game/Character';
-export { AttackResult, BODY_PARTS } from './game/Combat';
