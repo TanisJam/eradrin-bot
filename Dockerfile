@@ -11,12 +11,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
+# Copy package files AND pnpm config
+COPY package.json pnpm-lock.yaml .pnpmrc ./
 
-# Install ALL dependencies (needed for build)
-# Allow sqlite3 to run its build script
-RUN pnpm install --frozen-lockfile
+# Install ALL dependencies with build scripts allowed (needed for sqlite3 native compilation)
+RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds
 
 # ================================
 # Stage 2: Builder
@@ -53,12 +52,11 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
+# Copy package files AND pnpm config
+COPY package.json pnpm-lock.yaml .pnpmrc ./
 
-# Install ONLY production dependencies
-# Allow sqlite3 to rebuild for production
-RUN pnpm install --frozen-lockfile --prod
+# Install production dependencies with build scripts allowed (needed for sqlite3 native compilation)
+RUN pnpm install --frozen-lockfile --prod --dangerously-allow-all-builds
 
 # Copy compiled code from builder
 COPY --from=builder /app/dist ./dist
