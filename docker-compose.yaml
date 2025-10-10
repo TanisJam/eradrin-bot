@@ -1,15 +1,45 @@
 version: '3.8'
 
 services:
-  bot:
+  eradrin-bot:
+    container_name: eradrin-bot
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      - NODE_ENV=production
-
-      - GEMINI_API_KEY
-      - CLIENT_ID
-      - TOKEN
-      - GUILD_ID
+      NODE_ENV: production
+      # Discord Bot credentials
+      CLIENT_ID: ${CLIENT_ID}
+      TOKEN: ${TOKEN}
+      GUILD_ID: ${GUILD_ID}
+      # AI API Key
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    volumes:
+      # Persist SQLite database
+      - ./database.sqlite:/app/database.sqlite
+      # Persist knowledge base (read-only)
+      - ./knowledge:/app/knowledge:ro
+      # Optional: Persist logs if you add logging
+      # - ./logs:/app/logs
     restart: unless-stopped
+    networks:
+      - eradrin-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Resource limits (optional but recommended)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+networks:
+  eradrin-network:
+    driver: bridge

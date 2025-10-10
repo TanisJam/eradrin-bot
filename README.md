@@ -92,19 +92,16 @@ pnpm start
 
 ### Running with Docker
 
+**Simple start:**
 ```bash
-# Build image
-docker build -t eradrin-bot .
+# Using Docker Compose (recommended)
+docker compose up -d
 
-# Run container
-docker run -d --name eradrin-bot eradrin-bot
+# View logs
+docker compose logs -f eradrin-bot
 ```
 
-Or using Docker Compose:
-
-```bash
-docker-compose up -d
-```
+**For detailed Docker deployment instructions, including Coolify deployment, see [DEPLOYMENT.md](./DEPLOYMENT.md)**
 
 ## Implemented Best Practices
 

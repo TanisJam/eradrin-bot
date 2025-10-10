@@ -1,11 +1,56 @@
+# Dependencies
 node_modules
 .pnpm-store
-npm-debug.log
-pnpm-debug.log
-Dockerfile
-.dockerignore
+.npm
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+logs/
+
+# Development files
 .git
-.gitignore
-README.md
+.github
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Environment files
 .env
+.env.*
+!.env.example
+
+# Test files
+coverage/
+tests/
+*.test.ts
+*.spec.ts
+jest.config.js
+
+# Documentation (kept for reference, exclude if too large)
+*.md
+!README.md
+
+# Docker files (not needed inside container)
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts (will be generated during build)
 dist
+
+# Database (will be mounted as volume)
+database.sqlite
+database.sqlite-shm
+database.sqlite-wal
+data/
+
+# Scripts (not needed in production)
+scripts/

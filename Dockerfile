@@ -1,18 +1,73 @@
-FROM node:20
+# ================================
+# Stage 1: Dependencies
+# ================================
+FROM node:20-alpine AS deps
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Copiar archivos de configuración
-COPY package*.json ./
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
 
-# Instalar dependencias con npm (no pnpm)
-RUN npm install
+# Install ALL dependencies (needed for build)
+RUN pnpm install --frozen-lockfile
 
-# Copiar el código fuente
+# ================================
+# Stage 2: Builder
+# ================================
+FROM node:20-alpine AS builder
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source code
 COPY . .
 
-# Compilar TypeScript ignorando errores
-RUN npm run build || true
+# Build TypeScript (will fail if there are errors)
+RUN pnpm build
 
-# Comando para ejecutar la aplicación
+# ================================
+# Stage 3: Production
+# ================================
+FROM node:20-alpine AS runner
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Set production environment
+ENV NODE_ENV=production
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install ONLY production dependencies
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy compiled code from builder
+COPY --from=builder /app/dist ./dist
+
+# Create directory for database with proper permissions
+RUN mkdir -p /app/data && \
+    chown -R node:node /app
+
+# Switch to non-root user for security
+USER node
+
+# Expose port (if needed for healthcheck in future)
+EXPOSE 3000
+
+# Health check - simple process check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "process.exit(0)" || exit 1
+
+# Start the bot
 CMD ["node", "dist/src/index.js"]
