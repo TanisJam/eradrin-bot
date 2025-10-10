@@ -2,7 +2,7 @@ import { Client, IntentsBitField, Events, Collection } from 'discord.js';
 import config from './config';
 import * as commandsModules from './commands';
 import { initDatabase } from './database/config';
-import { Command } from './types/Command';
+import { Command } from './types';
 import { logger } from './utils/logger';
 
 // Create Discord client with necessary intents
