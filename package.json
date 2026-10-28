@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "dev": "concurrently \"tsc -w\" \"nodemon dist/index.js\"",
     "deploy:commands": "tsc && node dist/deploy-commands.js",
+    "deploy:commands:global": "tsc && node dist/deploy-commands.js --global",
     "safe-start": "tsx scripts/safe-start.ts",
     "safe-start:js": "tsc && node scripts/safe-start.js",
     "ingest-knowledge": "pnpm exec tsx scripts/ingest-knowledge.ts",
@@ -33,5 +34,10 @@
     "dotenv": "^16.4.5",
     "sequelize": "^6.37.5",
     "sqlite3": "^5.1.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
   }
 }

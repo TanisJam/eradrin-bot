@@ -8,6 +8,9 @@ import { logger } from './utils/logger';
  * This script should be executed after any command changes
  */
 
+// Check if the --global flag was passed
+const isGlobal = process.argv.includes('--global');
+
 // Collect commands
 const commands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 let commandCount = 0;
@@ -28,7 +31,7 @@ for (const key in commandsModules) {
   }
 }
 
-logger.info(`Prepared ${commandCount} commands for deployment`);
+logger.info(`Prepared ${commandCount} commands for deployment${isGlobal ? ' globally' : ' for guild'}`);
 
 // Configure REST client for Discord API communication
 const rest = new REST({ version: '10' }).setToken(config.TOKEN);
@@ -36,11 +39,13 @@ const rest = new REST({ version: '10' }).setToken(config.TOKEN);
 // Main function to deploy commands
 async function deployCommands(): Promise<boolean> {
   try {
-    logger.info('Starting command update...');
+    logger.info(`Starting ${isGlobal ? 'global' : 'guild'} command update...`);
 
-    // Register commands in the specific guild (server)
+    // Register commands in the specific guild (server) or globally
     const data = await rest.put(
-      Routes.applicationGuildCommands(config.CLIENT_ID, config.GUILD_ID),
+      isGlobal 
+        ? Routes.applicationCommands(config.CLIENT_ID)
+        : Routes.applicationGuildCommands(config.CLIENT_ID, config.GUILD_ID),
       { body: commands }
     );
 
@@ -60,7 +65,7 @@ if (require.main === module) {
   deployCommands()
     .then(success => {
       if (success) {
-        logger.info('Command deployment completed.');
+        logger.info(`Command deployment completed ${isGlobal ? 'globally' : 'for guild'}.`);
       } else {
         logger.error('Command deployment failed.');
         process.exit(1);
